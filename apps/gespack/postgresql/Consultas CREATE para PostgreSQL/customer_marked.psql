@@ -1,0 +1,27 @@
+DROP TABLE IF EXISTS customer_marked;
+CREATE TABLE customer_marked (
+  marked_id      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  marked_type_id BIGINT NOT NULL,
+  customer_id    BIGINT NOT NULL,
+  site_id        BIGINT NOT NULL,
+  source_marked  TEXT,
+  name           TEXT NOT NULL,
+  description    TEXT,
+  created_by     TEXT,
+  is_active      BOOLEAN DEFAULT TRUE,
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_by    TEXT,
+  updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id, marked_type_id) REFERENCES customer_marked_types(site_id, marked_type_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Unicidad por sitio y nombre de marcado
+CREATE UNIQUE INDEX uq_customer_marked_site_name ON customer_marked (site_id, name);
+
+-- Índices para consultas rápidas
+CREATE INDEX idx_customer_marked_site_id ON customer_marked (site_id);
+CREATE INDEX idx_customer_marked_updated_at ON customer_marked (site_id, updated_at);
+CREATE INDEX idx_customer_marked_customer_id ON customer_marked (customer_id);
+CREATE INDEX idx_customer_marked_marked_type_id ON customer_marked (marked_type_id);

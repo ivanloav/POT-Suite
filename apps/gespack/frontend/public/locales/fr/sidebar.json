@@ -1,0 +1,102 @@
+{
+  "sections": { "general": "Général", "admin": "Admin" },
+  "badges": { 
+    "hot": "Hot", 
+    "beta": "Bêta", 
+    "wip": "WIP"
+  },
+
+  "topbar": {
+    "myAccount": "Mon compte",
+    "logout": "Se déconnecter"
+  },
+  
+  "sitedropdown": {
+    "charge": "Chargement des sites...",
+    "placeholder": "Tous les sites",
+    "button": "Supprimer la sélection"
+  },
+
+  "menus": {
+    "dashboard": { "label": "Tableau de bord" },
+    "orders": {
+      "label": "Commandes",
+      "entry": "Saisie de commandes - À SUPPRIMER",
+      "edit": "Modification de commandes - À SUPPRIMER",
+      "query": "Consultation de commandes - À SUPPRIMER",
+      "cancel": "Annulation de commandes - À SUPPRIMER",
+      "unpaid": "Commandes impayées - À SUPPRIMER",
+      "correspondence - À SUPPRIMER": {
+        "label": "Correspondance - À SUPPRIMER",
+        "pie": "Graphique en secteurs - À SUPPRIMER",
+        "line": "Graphique linéaire - À SUPPRIMER",
+        "bar": "Graphique en barres - À SUPPRIMER"
+      }
+    },
+    "collect": "Encaissement de commandes - À SUPPRIMER",
+    "billing": {
+      "label": "Facturation",
+      "pie": "Graphique en secteurs - À SUPPRIMER",
+      "line": "Graphique linéaire - À SUPPRIMER",
+      "bar": "Graphique en barres - À SUPPRIMER"
+    },
+    "customers": {
+      "label": "Clients",
+      "create": "Création de clients - À SUPPRIMER",
+      "edit": "Modification de clients - À SUPPRIMER",
+      "delete": "Suppression de clients - À SUPPRIMER",
+      "participants": "Clients participants - À SUPPRIMER"
+    },
+    "actions": {
+      "label": "Actions",
+      "create": "Création d'actions - À SUPPRIMER",
+      "edit": "Modification d'actions - À SUPPRIMER",
+      "delete": "Suppression d'actions - À SUPPRIMER"
+    },
+    "products": {
+      "label": "Produits",
+      "create": "Création de produits - À SUPPRIMER",
+      "edit": "Modification de produits - À SUPPRIMER",
+      "delete": "Suppression de produits - À SUPPRIMER"
+    },
+    "returns": {
+      "label": "Retours",
+      "pie": "Graphique en secteurs - À SUPPRIMER",
+      "line": "Graphique linéaire - À SUPPRIMER",
+      "bar": "Graphique en barres - À SUPPRIMER"
+    },
+    
+    "reports": {
+      "label": "Listages - À SUPPRIMER",
+      "actions": "Actions - À SUPPRIMER",
+      "orders - À SUPPRIMER": {
+        "label": "Commandes - À SUPPRIMER",
+        "all": "Toutes les commandes - À SUPPRIMER",
+        "byDate": "Commandes par date - À SUPPRIMER",
+        "bar": "Graphique en barres - À SUPPRIMER"
+      },
+      "line": "Graphique linéaire - À SUPPRIMER",
+      "bar": "Graphique en barres - À SUPPRIMER"
+    },
+    "import": "Importer des fichiers",
+    
+    "admin": {
+      "label": "Admin",
+      "users": {
+        "label": "Utilisateurs",
+        "stats": "Statistiques"
+      },
+      "roles": {
+        "label": "Rôles"
+      },
+      "settings": {
+        "label": "Configuration",
+        "general": "Configuration générale - À SUPPRIMER",
+        "notifications": "Notifications - À SUPPRIMER"
+      }
+    },
+    "documentation": "Documentation",
+    "calendar": "Calendrier",
+    "examples": "Exemples"
+  }
+}

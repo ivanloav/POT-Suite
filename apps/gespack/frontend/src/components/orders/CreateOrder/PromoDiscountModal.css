@@ -1,0 +1,88 @@
+.promo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  /* Garantizar que el overlay capture todos los eventos */
+  isolation: isolate;
+}
+
+.promo-modal-content {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem 1.5rem 2.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+  outline: none;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1001;
+}
+
+.promo-modal-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.promo-modal-text {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.promo-modal-text-small {
+  font-size: 0.95rem;
+  margin-bottom: 1.2rem;
+}
+
+.promo-modal-input {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.5rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.promo-modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.promo-modal-btn {
+  font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.promo-modal-btn-primary {
+  background: #007bff;
+  color: #fff;
+}
+
+.promo-modal-btn-primary:hover {
+  background: #0056b3;
+}
+
+.promo-modal-btn-secondary {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.promo-modal-btn-secondary:hover {
+  background: #e0e0e0;
+}

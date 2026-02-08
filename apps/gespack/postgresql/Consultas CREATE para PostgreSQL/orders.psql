@@ -1,0 +1,116 @@
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TYPE IF EXISTS order_status CASCADE;
+
+-- Tipo ENUM de estado (como tenías)
+CREATE TYPE order_status AS ENUM (
+  'pending', 'paid', 'reserved', 'shipped', 'invoiced', 'returned', 'cancelled'
+);
+
+CREATE TABLE orders (
+  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id BIGINT NOT NULL,
+  order_datetime TIMESTAMP,
+  order_reference TEXT NOT NULL,
+  brand_id BIGINT NOT NULL,
+  order_source_id BIGINT,
+  action_id BIGINT,
+  action_category_id INT NOT NULL,
+  action_priority_id INT,
+  shipping_cost NUMERIC(19,4),
+  mandatory_shipping_fee NUMERIC(19,4),
+  customer_id BIGINT,
+  gender TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  payment_type_id BIGINT NOT NULL,
+  is_paid BOOLEAN DEFAULT FALSE,
+  paid_at DATE DEFAULT NULL,
+  is_invoiced BOOLEAN DEFAULT FALSE,
+  invoiced_at DATE DEFAULT NULL,
+  order_lines BIGINT DEFAULT 0,
+  weight FLOAT DEFAULT 0,
+  client_type NUMERIC(18,0),
+  participant TEXT,
+  order_amount NUMERIC(19,4),
+  bi1 NUMERIC(19,4),
+  bi2 NUMERIC(19,4),
+  tva1 NUMERIC(19,4),
+  tva2 NUMERIC(19,4),
+  return_status TEXT,
+  shipping_type TEXT,
+  value_em NUMERIC(18,0),
+  is_callcenter BOOLEAN DEFAULT FALSE,
+  is_stock_reserved BOOLEAN DEFAULT FALSE,
+  last_letter TEXT,
+  is_upselling BOOLEAN DEFAULT FALSE,
+  is_upselling_purchase BOOLEAN DEFAULT FALSE,
+  upselling_amount NUMERIC(19,4),
+  upselling_offer TEXT,
+  is_deferred BOOLEAN DEFAULT FALSE,
+  transport TEXT,
+  discount NUMERIC(19,4),
+  is_privileged BOOLEAN DEFAULT FALSE,
+  club_card_fee NUMERIC(19,4),
+  club_card_discount NUMERIC(19,4),
+  is_shipped_by_supplier BOOLEAN DEFAULT FALSE,
+  is_partially_shipped_by_supplier BOOLEAN DEFAULT FALSE,
+  is_supplier BOOLEAN DEFAULT FALSE,
+  is_substitute BOOLEAN DEFAULT FALSE,
+  is_no_article BOOLEAN DEFAULT FALSE,
+  no_article_amount NUMERIC(19,4),
+  is_bav BOOLEAN DEFAULT FALSE,
+  bav_amount NUMERIC(19,4),
+  bav_order TEXT,
+  amount_due NUMERIC(19,4),
+  next_available_number TEXT,
+  is_generated_bav BOOLEAN DEFAULT FALSE,
+  generated_bav_amount NUMERIC(19,4),
+
+  status order_status NOT NULL DEFAULT 'pending',
+
+  -- Auditoría consistente en TODAS las tablas
+  created_by BIGINT,                                 -- FK → users.user_id
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  modified_by BIGINT,                                -- FK → users.user_id
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Anulación (nuevos nombres)
+  is_annulled BOOLEAN DEFAULT FALSE,
+  annulled_by BIGINT,                                -- FK → users.user_id
+  annulled_at DATE,                                  -- antes: annulled_date
+
+  UNIQUE (site_id, order_reference),
+  UNIQUE (site_id, order_id),
+
+  -- FKs existentes
+  FOREIGN KEY (site_id, action_id)         REFERENCES actions(site_id, action_id)                 ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, customer_id)       REFERENCES customers(site_id, customer_id)             ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, action_priority_id)REFERENCES action_priority_types(site_id, action_priority_id) ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, action_category_id)REFERENCES action_categories(site_id, action_category_id)     ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, payment_type_id)   REFERENCES order_payments(site_id, order_payments_id)  ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, brand_id)          REFERENCES brands(site_id, brand_id)                   ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, order_source_id)   REFERENCES order_sources(site_id, order_source_id)    ON DELETE RESTRICT,
+
+  -- 🔒 Bloquear borrado de usuarios con histórico
+  CONSTRAINT fk_orders_created_by  FOREIGN KEY (created_by)  REFERENCES users(user_id) ON DELETE RESTRICT,
+  CONSTRAINT fk_orders_modified_by FOREIGN KEY (modified_by) REFERENCES users(user_id) ON DELETE RESTRICT,
+  CONSTRAINT fk_orders_annulled_by FOREIGN KEY (annulled_by) REFERENCES users(user_id) ON DELETE RESTRICT
+);
+
+-- Índices (como tenías + algunos útiles)
+DROP INDEX IF EXISTS idx_orders_order_id;
+CREATE INDEX idx_orders_order_id          ON orders (order_id);
+
+DROP INDEX IF EXISTS idx_orders_customer_id;
+CREATE INDEX idx_orders_customer_id       ON orders (customer_id);
+
+DROP INDEX IF EXISTS idx_orders_order_reference;
+CREATE INDEX idx_orders_order_reference   ON orders (site_id, order_reference);
+
+DROP INDEX IF EXISTS idx_orders_site_status;
+CREATE INDEX idx_orders_site_status       ON orders (site_id, status);
+
+-- Opcionales útiles
+CREATE INDEX IF NOT EXISTS idx_orders_created_by   ON orders (created_by);
+CREATE INDEX IF NOT EXISTS idx_orders_modified_by  ON orders (modified_by);
+CREATE INDEX IF NOT EXISTS idx_orders_annulled_by  ON orders (annulled_by);

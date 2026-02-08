@@ -1,0 +1,11 @@
+{ 
+    "dashboard": "Panel de control", 
+    "order": "Pedidos",
+    "orderList": "Lista de pedidos",
+    "orderEntry": "Grabación de pedidos",
+    "userManagement": "Gestión de usuarios",
+    "billingList": "Facturación",
+    "customersList": "Clientes",
+    "actionsList": "Acciones",
+    "productsList": "Productos"
+}

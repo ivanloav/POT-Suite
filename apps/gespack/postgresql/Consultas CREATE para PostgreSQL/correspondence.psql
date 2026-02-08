@@ -1,0 +1,30 @@
+CREATE TABLE correspondence (
+    correspondence_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    site_id BIGINT NOT NULL,                                           -- Cliente
+    customer_id BIGINT NOT NULL,                                         -- ID del cliente
+    customer_code BIGINT,                                                -- NUM_CLIENTE
+    order_reference TEXT,                                              -- PEDIDO
+    sent_date DATE NOT NULL,                                           -- FECHA
+    letter_type TEXT                                                   -- TIPO_CARTA
+
+    UNIQUE (site_id, correspondence_id),                             -- Clave primaria compuesta
+    UNIQUE (site_id, customer_id),                                   -- Evitar duplicados por ID cliente
+    UNIQUE (site_id, customer_code)                                  -- Evitar duplicados por cliente
+
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT
+);
+
+-- Si necesitas evitar duplicados por cliente y fecha:
+CREATE UNIQUE INDEX idx_correspondence_site_date ON correspondence (site_id, customer_code, sent_date);
+
+-- Índices para mejorar las búsquedas
+DROP INDEX IF EXISTS idx_correspondence_customer_id CASCADE;
+CREATE INDEX idx_correspondence_customer_id ON correspondence (site_id, customer_id);
+
+DROP INDEX IF EXISTS idx_correspondence_customer_code CASCADE;
+CREATE INDEX idx_correspondence_customer_code ON correspondence (site_id, customer_code);
+
+DROP INDEX IF EXISTS idx_correspondence_order_reference CASCADE;
+CREATE INDEX idx_correspondence_order_reference ON correspondence (site_id, order_reference);
+

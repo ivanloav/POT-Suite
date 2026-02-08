@@ -1,0 +1,84 @@
+# version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    container_name: gespack_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+    networks:
+      - shared-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: gespack_backend
+    restart: always
+    ports:
+      - "3001:5001"
+    environment:
+      - NODE_ENV=development
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}
+    networks:
+      - shared-network
+
+  docs:
+    build:
+      context: ./docs
+    container_name: gespack_docs
+    ports:
+      - "3002:3001"
+    command: npm run serve
+    networks:
+      - shared-network
+
+  nginx:
+    build:
+      context: ./nginx          # <-- usa tu Dockerfile dentro de ./nginx
+      dockerfile: Dockerfile
+    #image: gespack-app-nginx     # <-- nombre de la imagen que verás en 'docker images'
+    container_name: gespack_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:80"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+      - backend
+      - docs
+    networks:
+      - shared-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: gespack_certbot
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    entrypoint: /bin/sh -c
+    command:
+      - >-
+        certbot certonly --webroot --webroot-path=/var/www/certbot
+        --email ilopez@parcelontime.es --agree-tos --no-eff-email
+        -d gespack.parcelontime.es
+
+networks:
+  shared-network:
+    external: true

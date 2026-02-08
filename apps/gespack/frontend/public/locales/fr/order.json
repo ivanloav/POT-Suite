@@ -1,0 +1,90 @@
+{
+    "title": "Bienvenue dans la section des commandes",
+    "description": "Ici vous pouvez gérer vos commandes.",
+    "columns": {
+        "orderId": "ID",
+        "siteName": "Site",
+        "orderReference": "Référence",
+        "brandName": "Marque",
+        "actionId": "ID de l'action",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "fullName": "Nom complet",
+        "paymentTypeName": "Type de paiement",
+        "orderAmount": "Montant",
+        "status": "Statut",
+        "createdAt": "Date de création"
+    },
+
+    "status": {
+        "pending": "En attente",
+        "paid": "Payé",
+        "invoiced": "Facturé",
+        "shipped": "Expédié",
+        "reserved": "Réservé",
+        "returned": "Retourné",
+        "cancelled": "Annulé"
+    },
+
+    "filters": {
+        "idPlaceHolder": "ID",
+        "siteNamePlaceHolder": "Site",
+        "orderReferencePlaceHolder": "Référence de la commande",
+        "brandNamePlaceHolder": "Marque",
+        "fullNamePlaceHolder": "Nom complet",
+        "paymentTypeNamePlaceHolder": "Type de paiement",
+        "orderAmountPlaceHolder": "Montant de la commande",
+        "createdAtPlaceHolder": "Date de la commande",
+        "statusPlaceHolder": "Statut"
+    },
+
+    "actions": {
+        "addOrder": "Créer une commande",
+        "exportStats": "Exporter les statistiques",
+        "import": "Importer",
+        "refresh": "Actualiser",
+        "resetFilters": "Réinitialiser les filtres"
+    },
+
+    "addOrder": {
+        "title": "Créer une commande",
+        "CBReader": "Lecture de CB",
+        "source": "Source",
+        "action": "Action",
+        "participant": "Participant",
+        "customer": "Référence client",
+        "customerType": "Type client",
+        "customerName": "Nom client",
+        "customerAddress": "Adresse client",
+        "submit": "Créer l'utilisateur",
+        "success": "Utilisateur créé avec succès",
+        "error": "Erreur lors de la création de l'utilisateur"
+    },
+
+    "orderForm": {
+        "deferredPaymentModal": {
+            "configureCardInstallments": "Configurer {{count}} mensualités de carte",
+            "configureCheques": "Configurer {{count}} chèques",
+            "installmentsConfigured": "Mensualités configurées",
+            "chequesConfigured": "Chèques configurés",
+            "configureInstallments": "Configurer mensualités",
+            "configureChequePayments": "Configurer chèques",
+            "editSuffix": "(modifier)",
+            "cashNotAllowedDeferred": "Les paiements différés ne sont pas acceptés avec de l'espèces"
+        }
+    },
+
+    "notes": {
+        "title": "Observations",
+        "modalTitle": "Observations",
+        "internal": "Interne",
+        "external": "Externe",
+        "internalPlaceholder": "Observations internes (visibles uniquement par les employés)",
+        "externalPlaceholder": "Observations externes (visibles par le client)",
+        "charactersLeft": "caractères restants",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "internalLimit": "Observations internes (max 255 caractères)",
+        "externalLimit": "Observations externes (max 100 caractères)"
+    }
+}

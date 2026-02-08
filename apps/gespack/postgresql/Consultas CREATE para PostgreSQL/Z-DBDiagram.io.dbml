@@ -1,0 +1,99 @@
+Table sites {
+  site_id bigint [pk, note: 'ID único para cada cliente']
+  site_name text [not null, unique, note: 'Nombre único del site']
+  site_description text [note: 'Descripción del cliente/tenant']
+  contact_info text [note: 'Información de contacto']
+  is_active boolean [not null, default: true, note: '¿Site activo?']
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+}
+
+Table brands {
+  brand_id bigint [pk, note: 'ID único para la marca']
+  site_id bigint [not null, note: 'ID del site']
+  brand_name text [not null, note: 'Nombre de la marca']
+  description text [note: 'Descripción']
+  start_date date [note: 'Fecha de inicio']
+  end_date date [note: 'Fecha de fin']
+  is_active boolean [default: true, note: '¿Marca activa?']
+  created_by text [note: 'Creador']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  modified_by text [note: 'Modificador']
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+
+  Indexes {
+    (site_id, brand_name) [unique]
+    (site_id, brand_id) [unique]
+    brand_id
+    brand_name
+  }
+}
+
+Table actions_categories {
+  action_category_id int [pk, note: 'ID de categoría de acción']
+  site_id bigint [not null, note: 'ID del site']
+  category_name text [not null, note: 'Nombre de la categoría']
+  is_active boolean [default: true, note: '¿Activa?']
+  created_by text [note: 'Creador']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  modified_by text [note: 'Modificador']
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+
+  Indexes {
+    (site_id, action_category_id) [unique]
+    (site_id, category_name) [unique]
+  }
+}
+
+Table actions_priority_types {
+  action_priority_id int [pk, note: 'ID de prioridad']
+  site_id bigint [not null, note: 'ID del site']
+  priority_name text [not null, note: 'Nombre de la prioridad']
+  is_active boolean [default: true, note: '¿Activa?']
+  created_by text [note: 'Creador']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  modified_by text [note: 'Modificador']
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+
+  Indexes {
+    (site_id, action_priority_id) [unique]
+    (site_id, priority_name) [unique]
+  }
+}
+
+Table actions_category_costs {
+  action_category_cost_id int [pk, note: 'ID de coste de categoría de acción']
+  site_id bigint [not null, note: 'ID del site']
+  action_category_id int [not null, note: 'ID de la categoría de acción']
+  cost numeric(19,4) [note: 'Coste asociado']
+  created_by text [note: 'Creador']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  modified_by text [note: 'Modificador']
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+
+  Indexes {
+    (site_id, action_category_cost_id) [unique]
+    (site_id, action_category_id) [unique]
+  }
+}
+
+Table actions {
+  action_id bigint [pk, note: 'ID único para cada acción']
+  site_id bigint [not null, note: 'ID del sitio al que pertenece la acción']
+  action_name text [not null, note: 'Nombre de la acción']
+  action_category_id int [not null, note: 'ID de categoría']
+  action_priority_id int [note: 'Prioridad']
+  brand_id bigint [note: 'Marca']
+  start_date date [note: 'Fecha de inicio']
+  end_date date [note: 'Fecha de fin']
+  is_active boolean [default: true, note: '¿Activa?']
+  created_by text [note: 'Creador']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de creación']
+  modified_by text [note: 'Modificador']
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'Fecha de modificación']
+
+  Indexes {
+    (site_id, action_id) [unique]
+    (site_id, action_name) [unique]
+  }
+}

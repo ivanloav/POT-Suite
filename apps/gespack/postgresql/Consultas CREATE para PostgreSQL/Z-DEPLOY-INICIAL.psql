@@ -1,0 +1,533 @@
+-- Tabla: sites
+CREATE TABLE sites (
+    site_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    site_name TEXT NOT NULL CHECK (site_name ~ '^[A-Z]{1,15}$'),
+    site_description TEXT,
+    contact_info TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_timestamp
+BEFORE UPDATE ON sites
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- Tabla: customers_rnvp_types
+CREATE TABLE customers_rnvp_types (
+    rnvp_type_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                                 -- FECHA_MODIFICACION
+);
+
+-- Tabla: customers_marked_types
+CREATE TABLE customers_marked_types (
+    marked_type_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                                 -- FECHA_MODIFICACION
+);
+
+-- Tabla: customers
+CREATE TABLE customers (
+    site_id BIGINT NOT NULL,                                    -- ID_SITE (ID del sitio)
+    customer_id BIGINT NOT NULL,                                -- NUMERO_DE_CLIENT
+    customer_gender TEXT,                                       -- SEXO (Género)
+    customer_first_name TEXT,                                   -- NOMBRE (Nombre del cliente)
+    customer_last_name TEXT,                                    -- APELLIDO (Apellido del cliente)
+    
+    -- Dirección de facturación
+    -- billing_customer_name TEXT,                              -- NOMBRE (Nombre del cliente)
+    billing_gender TEXT,                                        -- SEXO (Género)
+    billing_first_name TEXT,                                    -- NOM (Primer nombre)
+    billing_last_name TEXT,                                     -- APE (Apellido)
+    billing_address_line1 TEXT,                                 -- DIR1 (Dirección línea 1)
+    billing_address_line2 TEXT,                                 -- DIR2 (Dirección línea 2)
+    billing_address_line3 TEXT,                                 -- DIR3 (Dirección línea 3)
+    billing_address_line4 TEXT,                                 -- DIR4 (Dirección línea 4)
+    billing_address_cp TEXT,                                    -- CP (Dirección línea 5)
+    billing_address_city TEXT,                                  -- POBLACION (Dirección línea 5)
+    billing_mobile_phone TEXT,                                  -- PORTABLE (Teléfono móvil)
+    -- Dirección de envío                       
+    -- shipping_customer_name TEXT,                             -- NOMBRE (Nombre del cliente)
+    shipping_gender TEXT,                                       -- SEXO (Género)
+    shipping_first_name TEXT,                                   -- NOM (Primer nombre)
+    shipping_last_name TEXT,                                    -- APE (Apellido)
+    shipping_address_line1 TEXT,                                -- DIR1 (Dirección línea 1)
+    shipping_address_line2 TEXT,                                -- DIR2 (Dirección línea 2)
+    shipping_address_line3 TEXT,                                -- DIR3 (Dirección línea 3)
+    shipping_address_line4 TEXT,                                -- DIR4 (Dirección línea 4)
+    shipping_address_cp TEXT,                                   -- CP (Dirección línea 5)
+    shipping_address_city TEXT,                                 -- POBLACION (Dirección línea 5)
+    shipping_mobile_phone TEXT,                                 -- PORTABLE (Teléfono móvil)
+
+    phone TEXT,                                                 -- TEL (Teléfono)
+    birth_date DATE,                                            -- FECHA_NACIMIENTO (Fecha de nacimiento)
+    npai TEXT,                                                  -- P1 (NPAI)
+    rfm TEXT,                                                   -- Q1 (RFM)
+    credit_risk TEXT,                                           -- R1 (MOROSOS Y MALPAGADORES)
+    source_origin TEXT,                                         -- S1 (Campo adicional S1)
+    is_under_guardianship BOOLEAN NOT NULL DEFAULT FALSE,       -- TUTELADO (Tutelado, booleano con valor predeterminado FALSE)
+    is_deceased BOOLEAN NOT NULL DEFAULT FALSE,                 -- DECEDE (Fallecido, booleano con valor predeterminado FALSE)
+    do_not_contact BOOLEAN NOT NULL DEFAULT FALSE,              -- ROBINSON (Robinson, booleano con valor predeterminado FALSE)
+    rnvp_type_id INT,                                           -- RNVP (Tipo de RNVP)
+    marked_type_id INT,                                         -- MARCADO (Tipo de marcado)
+    -- insert TEXT,                                             -- ENCARTE (Inserto)
+    email TEXT,                                                 -- EMAIL (Correo electrónico)
+    privileged BOOLEAN NOT NULL DEFAULT FALSE,                  -- PRIVILEGIE (Privilegiado, booleano con valor predeterminado FALSE)
+    privileged_date DATE,                                       -- DATE_PRIVILEGIE (Fecha de privilegio)
+    created_by TEXT,                                            -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,             -- FECHA_CREACION
+    modified_by TEXT,                                           -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,            -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, customer_id),
+
+    FOREIGN KEY (rnvp_type_id) REFERENCES customers_rnvp_types (rnvp_type_id),
+    FOREIGN KEY (marked_type_id) REFERENCES customers_marked_types (marked_type_id)
+);
+
+    CREATE INDEX idx_customers_id ON customers (customer_id);
+    CREATE INDEX idx_customers_last_name ON customers (customer_last_name);
+
+
+-- Tabla: orders_payments_card_types
+CREATE TABLE orders_payments_card_types (
+    card_type_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    card_type_name TEXT NOT NULL UNIQUE,											 -- Nombre del tipo de tarjeta, como 'VISA', 'MasterCard', etc.
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                                -- FECHA_MODIFICACION
+);
+
+-- Tabla: products
+CREATE TABLE products (
+    site_id BIGINT NOT NULL,                                        -- Identificador del sitio (clave primaria compuesta)
+    product_id BIGINT GENERATED ALWAYS AS IDENTITY,                 -- Identificador único del producto
+    reference TEXT NOT NULL,                                        -- REFERENCIA: Referencia del producto
+    catalog TEXT,                                                   -- CATALOGO: Código del catálogo
+    action TEXT,                                                    -- ACCION: Acción asociada
+    description TEXT,                                               -- DESCRIPCION: Descripción del producto
+    weight NUMERIC(10, 3),                                          -- PESO: Peso del producto
+    vat NUMERIC(10, 3),                                             -- IVA: Impuesto aplicado
+    picking_location TEXT,                                          -- UBICACION_PICKING: Ubicación de picking
+    storage_location TEXT,                                          -- UBICACION_ALMACEN: Ubicación en almacén
+    packaging SMALLINT,                                             -- EMBALAJE: Tipo de embalaje
+    price NUMERIC(19, 4),                                           -- PRECIO: Precio del producto
+    units_per_pack INT,                                             -- UNIDADES_PACK: Unidades por pack
+    stock INT,                                                      -- STOCK: Cantidad en stock
+    cost NUMERIC(19, 4),                                            -- COSTE: Coste del producto
+    additional_info TEXT,                                           -- INF_ADICIONAL: Información adicional
+    vat_type SMALLINT,                                              -- TIPO_IVA: Tipo de IVA
+    status TEXT,                                                    -- ESTADO: Estado del producto
+    blocked_stock SMALLINT,                                         -- STOCKBLOQUEADO: Cantidad de stock bloqueado
+    is_shipped_by_supplier BOOLEAN NOT NULL DEFAULT FALSE,          -- PESADO: Producto pesado, valor predeterminado falso
+    created_by TEXT,                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                 -- FECHA_CREACION
+    modified_by TEXT,                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, product_id)                               -- Clave primaria compuesta por site_id y product_id
+);
+
+    CREATE INDEX idx_products_reference ON products (reference);    -- Índice para mejorar las búsquedas por referencia
+
+-- Tabla: bundles
+CREATE TABLE bundles (
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece el bundle
+    bundle_item_id BIGINT GENERATED ALWAYS AS IDENTITY,                             -- ID único para cada item del bundle
+    bundle_id INT,                                                                  -- ID_BUNDLE (Identificador del bundle)
+    product_id BIGINT NOT NULL,                                                     -- ID del producto (clave foránea a products)
+    sku_bundle TEXT,                                                                -- SKU_BUNDLE
+    sku_wms TEXT,                                                                   -- SKU_WMS
+    qty INT,                                                                        -- QTY (Cantidad)
+    date_creation TIMESTAMP,                                                        -- DATE_CREATION (Fecha de creación)
+    created_by TEXT,                                                                -- CREATED_BY (Creado por)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIF_BY (Modificado por)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+    is_active BOOLEAN DEFAULT FALSE,                                                -- IS_ACTIVE (Activo)
+    PRIMARY KEY (site_id, bundle_item_id),                                          -- Clave primaria compuesta
+    FOREIGN KEY (site_id, product_id) REFERENCES products(site_id, product_id) ON DELETE SET NULL     -- Clave foránea a products
+);
+
+CREATE INDEX idx_bundles_sku_bundle ON bundles (sku_bundle);                        -- Índice para mejorar las búsquedas
+CREATE INDEX idx_bundles_sku_wms ON bundles (sku_wms);                              -- Índice para mejorar las búsquedas
+
+-- Tabla: brands
+CREATE TABLE brands (
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    brand_id BIGINT GENERATED ALWAYS AS IDENTITY,                                  -- ID único para cada acción
+    brand_name TEXT NOT NULL,                                                      -- MARCA
+    description TEXT,                                                               -- DESCRIPCION
+    start_date DATE,                                                           -- FECHA_INICIO
+    end_date DATE,                                                             -- FECHA_FIN
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ACTIVO
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, brand_id)                                                -- Clave primaria compuesta
+);
+    
+    CREATE INDEX idx_brands_brand_id ON brands (brand_name);                  -- Índice para mejorar las búsquedas
+
+-- Tabla: actions_categories
+CREATE TABLE actions_categories (
+    site_id BIGINT NOT NULL,                                -- ID del sitio al que pertenece la categoría
+    action_category_id BIGINT GENERATED ALWAYS AS IDENTITY,        -- ID único de la categoría
+    category_name TEXT NOT NULL,                            -- Nombre de la categoría
+    description TEXT,                                       -- Descripción de la categoría
+    created_by TEXT,                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,       -- FECHA_CREACION
+    modified_by TEXT,                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, action_category_id)                      -- Clave primaria compuesta
+);
+
+-- Tabla: actions_priority_types
+CREATE TABLE actions_priority_types (
+    site_id BIGINT NOT NULL,                                -- ID del sitio
+    action_priority_id BIGINT GENERATED ALWAYS AS IDENTITY, -- ID único del tipo de prioridad
+    priority_name TEXT NOT NULL,                            -- Nombre del tipo de prioridad (e.g., "NORMAL", "EXPRESS")
+    created_by TEXT,                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,         -- FECHA_CREACION
+    modified_by TEXT,                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, action_priority_id)               -- Clave primaria compuesta
+);
+
+-- Tabla: actions_category_costs
+CREATE TABLE actions_category_costs (
+    site_id BIGINT NOT NULL,                                -- ID del sitio al que pertenece el costo
+    category_cost_id BIGINT GENERATED ALWAYS AS IDENTITY,   -- ID único del costo
+    action_category_id INT NOT NULL,                        -- Categoría a la que pertenece el costo
+    action_priority_id INT NOT NULL,                        -- Tipo de prioridad
+    shipping_cost NUMERIC(19, 4) NOT NULL,                  -- Costo de envío
+    mandatory_fee NUMERIC(19, 4) DEFAULT 0,                 -- Tarifas adicionales (FRAIS)
+    created_by TEXT,                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,         -- FECHA_CREACION
+    modified_by TEXT,                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, category_cost_id),                -- Clave primaria compuesta
+    FOREIGN KEY (site_id, action_category_id) REFERENCES actions_categories(site_id, action_category_id) ON DELETE CASCADE, -- Referencia a categorías
+    FOREIGN KEY (site_id, action_priority_id) REFERENCES actions_priority_types(site_id, action_priority_id) ON DELETE CASCADE -- Referencia a tipos de prioridad
+);
+
+-- Tabla: actions
+CREATE TABLE actions (
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    action_id BIGINT GENERATED ALWAYS AS IDENTITY,                                  -- ID único para cada acción
+    action_name TEXT NOT NULL,                                                      -- ACCION
+    description TEXT,                                                               -- DESCRIPCION
+    launch_date TIMESTAMP NOT NULL,                                                 -- FECHA_LANZAMIENTO
+    brand_id BIGINT NOT NULL,                                                                     -- Marca
+    print_run INT,                                                                  -- TIRADA
+    deposit_date TIMESTAMP NOT NULL,                                                -- DATE_DEPOT
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ESTADO
+    catalog_code TEXT,                                                              -- CODE_CATALOGUE
+    catalog_lot TEXT,                                                               -- LOT_CATALOGUE
+    catalog_description TEXT,                                                       -- DESC_CATALOGUE
+    action_category_id INT,  -- Categoría de la acción
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+
+    PRIMARY KEY (site_id, action_id),                                                -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, action_category_id) REFERENCES actions_categories(site_id, action_category_id) ON DELETE SET NULL, -- Referencia a categorías
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE SET NULL -- Referencia a brands
+);
+
+    CREATE INDEX idx_actions_action_id ON actions (action_name);                    -- Índice para mejorar las búsquedas
+
+-- Tabla: orders_payments
+CREATE TABLE orders_payments (
+    orders_payments_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, -- ID (Identificador único del pago)
+    site_id BIGINT NOT NULL,                                    -- ID del sitio, sin relación directa con Sites
+    order_id INT NOT NULL,                                      -- pedido_id (Referencia a Orders, junto con site_id)
+    
+    payment_type TEXT NOT NULL,                                 -- TIPO_PAGO (Indica el tipo de pago)
+    holder_name TEXT,                                           -- TIT_CHEQUE o TIT_TARJETA (Nombre del titular)
+    amount NUMERIC(19,4) NOT NULL,                              -- IMP o IMP_TARJ o IMP_EFECTIVO (Monto general del pago)
+    
+    -- Campos específicos para cheque
+    bank_name TEXT,                                             -- Banco
+    cheque_number TEXT,                                         -- NUM_CHEQUE (Número de cheque)
+    
+    -- Campos específicos para tarjeta
+    card_type_id INT REFERENCES orders_payments_card_types(card_type_id), -- VISA (Tipo de tarjeta)
+    card_number BIGINT,                                         -- NUM_TARJETA
+    expiration_date VARCHAR(5),                                 -- CADUCIDAD (Fecha de caducidad)
+    security_code INT,                                          -- COD_VER (Código de verificación)
+    
+    -- Campos relacionados con el estado de pago
+    is_unpaid BOOLEAN DEFAULT FALSE,                            -- IMPAGADO
+    unpaid_amount NUMERIC(19,4),                                -- IMPORTE_IMPAGO
+    unpaid_date DATE,                                           -- FECHA_IMPAGADO
+    is_recovered BOOLEAN DEFAULT FALSE,                         -- RECOBRADO
+    recovered_amount NUMERIC(19,4),                             -- IMPORTE_RECOBRADO
+    recovery_date DATE,                                         -- FECHA_RECOBRADO
+    is_uncollectible BOOLEAN DEFAULT FALSE,                     -- INCOBRABLE
+    uncollectible_amount NUMERIC(19,4),                         -- IMPORTE_INCOBRABLE
+    uncollectible_date DATE,                                    -- FECHA_INCOBRABLE
+    
+    created_by TEXT,                                            -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,             -- FECHA_CREACION
+    modified_by TEXT,                                           -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,            -- FECHA_MODIFICACION
+
+    -- Asegurar que cada combinación de site_id y order_id sea única en Payments
+    UNIQUE (site_id, order_id)
+);
+
+-- Tabla: orders
+CREATE TABLE Orders (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,                 -- ID (Clave primaria autonumérica)
+    site_id BIGINT NOT NULL,                                -- ID_SITE
+    order_datetime TIMESTAMP,                               -- FECHA_PEDIDO
+    order_id BIGINT NOT NULL,                               -- PEDIDO (Código o número del pedido)
+    brand_id BIGINT NOT NULL,                               -- Marca
+    source TEXT,                                            -- Origen
+    action_id BIGINT,                                       -- ACCION
+    action_category_id INT NOT NULL,                              -- Categoría asociada
+    action_priority_id INT,                                       -- Tipo de prioridad
+    shipping_cost NUMERIC(19, 4),                          -- ENVIO
+    mandatory_shipping_fee NUMERIC(19, 4),                 -- FRAIS
+    customer_id BIGINT,                                     -- REF_CLIENTE
+    gender TEXT,                                            -- SEXO
+    first_name TEXT,                                        -- NOM
+    last_name TEXT,                                         -- APE
+    -- mobile_phone TEXT,                                   -- TEL
+    -- customer_name TEXT,                                  -- NOMBRE_COMPLETO
+    -- address_line1 TEXT,                                  -- DIR1
+    -- address_line2 TEXT,                                  -- DIR2
+    -- address_line3 TEXT,                                  -- DIR3
+    -- address_line4 TEXT,                                  -- DIR4
+    -- address_line5 TEXT,                                  -- CP_POB
+    -- postal_code TEXT,                                    -- CP
+    -- city TEXT,                                           -- POBLACION
+    -- priority TEXT,                                          -- PRIORITAIRE
+    payment_type_id BIGINT NOT NULL,                        -- TIPO_PAGO (ID que referencia a OrdersPayments)
+    is_paid BOOLEAN DEFAULT FALSE,                          -- COBRADO
+    paid_date DATE DEFAULT NULL,                            -- GESTION_COBRO
+    is_invoiced BOOLEAN DEFAULT FALSE,                      -- Facturado
+    invoiced_date DATE DEFAULT NULL,                        -- Fecha Facturado
+    order_lines BIGINT DEFAULT 0,                           -- LINEAS_PEDIDO
+    weight FLOAT DEFAULT 0,                                 -- Peso
+    -- shipping_cost NUMERIC(19,4) DEFAULT 0,                  -- ENVIO (Coste de envío)
+    -- mandatory_shipping_fee NUMERIC(19,4) DEFAULT 0,         -- FRAIS (Tarifas adicionales)
+    -- order_date DATE,                                     -- FECHA
+    client_type NUMERIC(18, 0),                             -- TIPO_CLIENTE
+    participant TEXT,                                       -- PARTICIPANTE
+    order_amount NUMERIC(19,4),                             -- IMPORTE_PEDIDO
+    bi1 NUMERIC(19,4),                                      -- BI1
+    bi2 NUMERIC(19,4),                                      -- BI2
+    tva1 NUMERIC(19,4),                                     -- TVA1
+    tva2 NUMERIC(19,4),                                     -- TVA2
+    return_status TEXT,                                     -- DEVOLUCION
+    shipping_type TEXT,                                     -- TIPO_ENVIO
+    value_em NUMERIC(18, 0),                                -- VALOR
+    -- unpaid BOOLEAN DEFAULT FALSE,                           -- IMPAGADO
+    -- unpaid_amount NUMERIC(19,4),                            -- IMPORTE_IMPAGO
+    -- unpaid_date DATE,                                       -- FECHA_IMPAGADO
+    -- recovered BOOLEAN DEFAULT FALSE,                        -- RECOBRADO
+    -- recovered_amount NUMERIC(19,4),                         -- IMPORTE_RECOBRADO
+    -- recovery_date DATE,                                     -- FECHA_RECOBRADO
+    -- uncollectible BOOLEAN DEFAULT FALSE,                    -- INCOBRABLE
+    -- uncollectible_amount NUMERIC(19,4),                     -- IMPORTE_INCOBRABLE
+    -- uncollectible_date DATE,                                -- FECHA_INCOBRABLE
+    is_callcenter BOOLEAN DEFAULT FALSE,                    -- CALLCENTER
+    is_stock_reserved BOOLEAN DEFAULT FALSE,                -- RESERVASTOCK
+    last_letter TEXT,                                       -- ULTIMA_CARTA
+    is_upselling BOOLEAN DEFAULT FALSE,                     -- UPSELLING
+    is_upselling_purchase BOOLEAN DEFAULT FALSE,            -- COMPRA_UPSELLING
+    upselling_amount NUMERIC(19,4),                         -- IMPORTE_UPSELLING
+    upselling_offer TEXT,                                   -- OFERTA_UPSELLING
+    is_deferred BOOLEAN DEFAULT FALSE,                      -- APLAZADO
+    transport TEXT,                                         -- TRSP
+    discount NUMERIC(19,4),                                 -- RED10 (Descuento del 10%)
+    privileged BOOLEAN DEFAULT FALSE,                       -- IS_PRIVILEGIE
+    club_card_fee NUMERIC(19,4),                            -- IMPCARTECLUB
+    club_card_discount NUMERIC(19,4),                       -- REDCARTECLUB
+    is_shipped_by_supplier BOOLEAN DEFAULT FALSE,           -- IS_PESADO
+    is_partially_shipped_by_supplier BOOLEAN DEFAULT FALSE, -- IS_PESADO_PARCIAL
+    is_supplier BOOLEAN DEFAULT FALSE,                      -- FOURNISSEUR
+    is_substitute BOOLEAN DEFAULT FALSE,                    -- IS_SUSTITUTIVO
+    is_no_article BOOLEAN DEFAULT FALSE,                    -- IS_SIN_ARTICULO
+    no_article_amount NUMERIC(19,4),                        -- IMP_SINART
+    bav BOOLEAN DEFAULT FALSE,                              -- IS_BAV
+    bav_amount NUMERIC(19,4),                               -- IMP_BAV
+    bav_order TEXT,                                         -- PEDIDO_BAV
+    amount_due NUMERIC(19,4),                               -- IMP_A_PAGAR
+    next_available_number TEXT,                             -- NextAvailableNumber
+    generated_bav BOOLEAN DEFAULT FALSE,                    -- IS_BAV_GENERADO
+    generated_bav_amount NUMERIC(19,4),                     -- IMP_BAV_GENERADO
+    observations TEXT,                                      -- OBSERVACIONES
+    is_annulled BOOLEAN DEFAULT FALSE,                      -- ANULADO
+    annulled_date DATE,                                     -- FECHA_ANULADO
+    annulled_by TEXT,                                       -- ANULADO_POR
+    created_by TEXT,                                        -- GRABADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,         -- FECHA_GRABACION
+    modified_by TEXT,                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, order_id),                        -- Clave compuesta en Orders
+
+    -- Clave foránea compuesta hacia Customers
+    -- FOREIGN KEY (site_id, order_id) REFERENCES orders_addresses(site_id, order_id) ON DELETE CASCADE,
+    FOREIGN KEY (site_id, action_id) REFERENCES actions(site_id, action_id) ON DELETE SET NULL,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE SET NULL,
+    FOREIGN KEY (site_id, action_priority_id) REFERENCES actions_priority_types(site_id, action_priority_id) ON DELETE CASCADE, -- Referencia a tipos de prioridad
+    FOREIGN KEY (site_id, action_category_id) REFERENCES actions_categories(site_id, action_category_id) ON DELETE CASCADE, -- Referencia a categorías
+    -- FOREIGN KEY (site_id, payment_type_id) REFERENCES orders_payments(site_id, orders_payments_id) ON DELETE CASCADE, -- Referencia a tipos de pago
+	FOREIGN KEY (site_id, order_id) REFERENCES orders_payments(site_id, order_id) ON DELETE CASCADE, -- Referencia a tipos de pago
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE SET NULL -- Referencia a brands
+);
+    
+    CREATE INDEX idx_orders_order_id ON orders (order_id);
+    CREATE INDEX idx_orders_customer_id ON orders (customer_id);
+
+-- Tabla: order_items
+CREATE TABLE order_items (
+    site_id BIGINT NOT NULL,                                 -- ID del sitio asociado al pedido
+    order_item_id BIGINT GENERATED ALWAYS AS IDENTITY,       -- Identificador único para el artículo del pedido
+    order_id BIGINT NOT NULL,                                -- Clave foránea a Orders
+    line_number INT,                                         -- Número de línea en el pedido
+    product_ref TEXT,                                        -- ID_REF (Referencia al producto)
+    catalog_ref TEXT,                                        -- REF_ART (Referencia en el catálogo)
+    catalog_code TEXT,                                       -- CATALOGO (Código del catálogo)
+    quantity INT,                                            -- Cantidad del artículo
+    product_description TEXT,                                -- Articulo (Descripción del artículo)
+    unit_price NUMERIC(19, 4),                               -- Precio (Precio unitario del artículo)
+    line_total NUMERIC(19, 4),                               -- IMP (Importe total de la línea)
+    is_abonado TEXT,                                         -- ABONADO (Estado de abonado)
+    stock_reserved BOOLEAN DEFAULT FALSE,                    -- RESERVASTOCK (Reserva de stock)
+    -- brand TEXT,                                              -- MARCA (Marca del producto)
+    is_substitute BOOLEAN DEFAULT FALSE,                     -- IS_SUSTITUTIVO (Indica si es sustitutivo)
+    -- substitute_product_ref TEXT,                             -- ID_REF_SUST (Referencia del producto sustitutivo)
+    -- substitute_catalog_ref TEXT,                             -- REF_SUST (Referencia en el catálogo del sustitutivo)
+    -- substitute_catalog_code TEXT,                            -- CATALOGO_SUST (Código del catálogo del sustitutivo)
+    -- substitute_quantity INT,                                 -- CANT_SUST (Cantidad sustitutiva)
+    -- substitute_description TEXT,                             -- DESC_SUST (Descripción del artículo sustitutivo)
+    -- substitute_import NUMERIC(19, 4),                        -- IMP_SUST (Importe del artículo sustitutivo)
+    is_unavailable BOOLEAN DEFAULT FALSE,                    -- IS_SIN_ARTICULO (Indica si no hay artículo)
+    apology_phrase TEXT,                                     -- FRASE_DISCULPA (Frase de disculpa)
+    is_supplier_shipped BOOLEAN DEFAULT FALSE,               -- IS_PESADO (Indica si el producto es pesado)
+    created_by TEXT,                                         -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- FECHA_CREACION
+    modified_by TEXT,                                        -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,         -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, order_item_id),                   -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, order_id) REFERENCES orders(site_id, order_id) ON DELETE CASCADE -- Relación con la tabla Orders
+);
+
+    CREATE INDEX idx_order_items_order_id ON order_items (order_id);
+    CREATE INDEX idx_order_items_product_ref ON order_items (product_ref);
+	
+-- Tabla: order_item_substitutes
+CREATE TABLE order_item_substitutes (
+    site_id BIGINT NOT NULL,                                 -- ID del sitio asociado al pedido
+    order_item_id BIGINT NOT NULL,                           -- Clave foránea a order_items
+    substitute_product_ref TEXT,                             -- ID_REF_SUST (Referencia del producto sustitutivo)
+    substitute_catalog_ref TEXT,                             -- REF_SUST (Referencia en el catálogo del sustitutivo)
+    substitute_catalog_code TEXT,                            -- CATALOGO_SUST (Código del catálogo del sustitutivo)
+    substitute_quantity INT,                                 -- CANT_SUST (Cantidad sustitutiva)
+    substitute_description TEXT,                             -- DESC_SUST (Descripción del artículo sustitutivo)
+    substitute_import NUMERIC(19, 4),                        -- IMP_SUST (Importe del artículo sustitutivo)
+    created_by TEXT,                                         -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- FECHA_CREACION
+    modified_by TEXT,                                        -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,         -- FECHA_MODIFICACION
+
+    PRIMARY KEY (site_id, order_item_id, substitute_product_ref), -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, order_item_id) REFERENCES order_items(site_id, order_item_id) ON DELETE CASCADE -- Relación con la tabla order_items
+);
+
+CREATE INDEX idx_order_item_substitutes_order_item_id ON order_item_substitutes (order_item_id);
+CREATE INDEX idx_order_item_substitutes_substitute_product_ref ON order_item_substitutes (substitute_product_ref);
+
+-- Tabla: orders_addresses
+CREATE TABLE orders_addresses (
+    address_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id BIGINT NOT NULL,                      -- Clave foránea para la relación con Orders
+    site_id INT NOT NULL,                       -- Clave foránea para la relación con Sites
+
+    -- Dirección de facturación    
+    billing_customer_name TEXT,           
+    billing_address_line1 TEXT,           
+    billing_address_line2 TEXT,           
+    billing_address_line3 TEXT,           
+    billing_address_line4 TEXT,           
+    billing_address_line5 TEXT,           
+    billing_postal_code TEXT,                 -- CP
+    billing_city TEXT,                        -- POBLACION
+    billing_mobile_phone TEXT,                       -- TEL
+
+    -- Dirección de envío
+    shipping_customer_name TEXT,          
+    shipping_address_line1 TEXT,          
+    shipping_address_line2 TEXT,          
+    shipping_address_line3 TEXT,          
+    shipping_address_line4 TEXT,          
+    shipping_address_line5 TEXT,          
+    shipping_postal_code TEXT,                 -- CP
+    shipping_city TEXT,                        -- POBLACION
+    shipping_mobile_phone TEXT,                       -- TEL
+
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    -- Relación con la tabla Orders
+    FOREIGN KEY (site_id, order_id) REFERENCES Orders(site_id, order_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS montant CASCADE;
+CREATE TABLE montant (
+    montant_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- Identificador único
+    site_id BIGINT NOT NULL,                                      -- Cliente/Tenant
+    range_from DOUBLE PRECISION,                                  -- Límite inferior del rango
+    range_to DOUBLE PRECISION,                                    -- Límite superior del rango
+    amount DOUBLE PRECISION,                                      -- Monto correspondiente
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, range_from, range_to),                       -- Asegurar que no haya rangos duplicados para el mismo sitio
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+-- Índices recomendados
+DROP INDEX IF EXISTS idx_montant_site_from CASCADE;
+DROP INDEX IF EXISTS idx_montant_site_to CASCADE;
+CREATE INDEX idx_montant_site_from ON montant (site_id, range_from);
+CREATE INDEX idx_montant_site_to ON montant (site_id, range_to);

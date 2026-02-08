@@ -1,0 +1,26 @@
+CREATE TABLE returns (
+    return_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    site_id BIGINT NOT NULL,                                   -- Cliente
+    order_reference TEXT NOT NULL,                           -- Pedido asociado
+    return_date DATE,                                          -- Fecha de devolución
+    action TEXT,                                               -- Acción realizada
+    customer_code BIGINT NOT NULL,                             -- Número de cliente
+    marked TEXT,                                               -- Marcado
+
+    created_by TEXT,                                           -- Auditoría
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Clave foránea: prohibido eliminar cliente si tiene devoluciones
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_reference) REFERENCES orders(site_id, order_reference) ON DELETE RESTRICT
+);
+
+    -- Índice para búsquedas rápidas por cliente
+DROP INDEX IF EXISTS idx_returns_site_customer_code CASCADE;
+    CREATE INDEX idx_returns_site_customer_code ON returns (site_id, customer_code);
+
+    -- Índice para búsquedas rápidas por pedido
+DROP INDEX IF EXISTS idx_returns_site_order_reference CASCADE;
+    CREATE INDEX idx_returns_site_order_reference ON returns (site_id, order_reference);

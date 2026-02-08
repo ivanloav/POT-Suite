@@ -1,0 +1,21 @@
+DROP TABLE IF EXISTS montant CASCADE;
+CREATE TABLE montant (
+    montant_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- Identificador único
+    site_id BIGINT NOT NULL,                                      -- Cliente/Tenant
+    range_from DOUBLE PRECISION,                                  -- Límite inferior del rango
+    range_to DOUBLE PRECISION,                                    -- Límite superior del rango
+    amount DOUBLE PRECISION,                                      -- Monto correspondiente
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, range_from, range_to),                       -- Asegurar que no haya rangos duplicados para el mismo sitio
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+-- Índices recomendados
+DROP INDEX IF EXISTS idx_montant_site_from CASCADE;
+DROP INDEX IF EXISTS idx_montant_site_to CASCADE;
+CREATE INDEX idx_montant_site_from ON montant (site_id, range_from);
+CREATE INDEX idx_montant_site_to ON montant (site_id, range_to);

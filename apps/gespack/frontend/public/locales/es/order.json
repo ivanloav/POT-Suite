@@ -1,0 +1,244 @@
+{
+    "title": "Bienvenido a la sección de pedidos",
+    "description": "Aquí puedes gestionar tus pedidos.",
+    "columns": {
+        "orderId": "ID",
+        "siteName": "Sitio",
+        "orderReference": "Referencia",
+        "brandName": "Marca",
+        "actionId": "ID de la acción",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "fullName": "Nombre completo",
+        "paymentTypeName": "Tipo de pago",
+        "orderAmount": "Importe",
+        "status": "Estado",
+        "createdAt": "Fecha de creación"
+    },
+
+    "status": {
+        "pending": "Pendiente",
+        "paid": "Cobrado",
+        "invoiced": "Facturado",
+        "shipped": "Enviado",
+        "reserved": "Reservado",
+        "returned": "Devuelto",
+        "cancelled": "Cancelado"
+    },
+
+    "filters": {
+        "idPlaceHolder": "ID",
+        "siteNamePlaceHolder": "Sitio",
+        "orderReferencePlaceHolder": "Referencia del pedido",
+        "brandNamePlaceHolder": "Marca",
+        "fullNamePlaceHolder": "Nombre completo",
+        "paymentTypeNamePlaceHolder": "Tipo de pago",
+        "orderAmountPlaceHolder": "Importe del pedido",
+        "createdAtPlaceHolder": "Fecha del pedido",
+        "statusPlaceHolder": "Estado"
+    },
+
+    "actions": {
+        "addOrder": "Crear pedido",
+        "exportStats": "Exportar estadísticas",
+        "import": "Importar",
+        "refresh": "Actualizar",
+        "resetFilters": "Restablecer filtros",
+        "cancel": "Cancelar",
+        "save": "Guardar"
+    },
+
+    "orderForm": {
+        "title": "Crear pedido",
+        "section": {
+            "orderData": "Datos del pedido",
+            "customer": "Datos del cliente",
+            "lines": "Líneas del pedido",
+            "paymentData": "Información del pago",
+            "notes": "Observaciones",
+            "taxBreakDown": "Desglose de impuestos"
+        },
+        "noCustomerSelected": "No se ha seleccionado ningún cliente",
+        "CBReader": "Lectura de CB",
+        "readCB": "Escanea un código de barras válido",
+        "source": "Origen",
+        "loading": "Cargando...",
+        "selectSource": "Seleccionar origen",
+        "noSources": "No se encontraron orígenes",
+        "action": "Acción",
+        "selectAction": "Seleccionar acción",
+        "noActions": "No se encontraron acciones",
+        "participant": "Participante",
+        "customer": "Cliente",
+        "selectCustomer": "Seleccionar cliente",
+        "noCustomers": "No se encontraron clientes",
+        "customerType": "Tipo cliente",
+        "selectCustomerType": "Seleccionar tipo cliente",
+        "noCustomerTypes": "No se encontraron tipos de cliente",
+        "customerName": "Nombre del cliente",
+        "customerAddress": "Dirección cliente",
+        "customerPhone": "Teléfono fijo",
+        "customerMobile": "Móvil",
+        "customerEmail": "Email",
+        "orderLines": {
+            "selectProductLine": "Seleccionar un producto",
+            "noProductLines": "No se encontraron productos",
+            "line": "Línea",
+            "reference": "Referencia",
+            "qty": "Cant",
+            "description": "Descripción",
+            "price": "Precio",
+            "import": "Importe",
+            "discount": "Dto. Promo.: ",
+            "clubPriv": "Club Privilege: ",
+            "subtotal": "Subtotal: ",
+            "discountPriv": "Dto. 10% Privilege: ",
+            "priorityShipping": "Envío prioritario: ",
+            "mandatoryFee": "Gastos obligatorios: ",
+            "totalOrder": "Total del pedido: ",
+            "bav": "B.A.V.: ",
+            "total": "Total a pagar: "
+        },
+
+        "promotionsModal": {
+            "firstModalTitle": "Descuento promocional",
+            "firstModalText": "¿Este pedido tiene descuento promocional?",
+            "initialYes": "S",
+            "restYes": "í",
+            "initialNo": "N",
+            "restNo": "o",
+            "yes": "Sí, aplicar descuento",
+            "no": "No, sin descuento",
+            "secondModalTitle": "Importe del descuento",
+            "secondModalText": "Introduzca el importe del descuento promocional: ",
+            "apply": "Aplicar",
+            "return": "Volver"
+        },
+
+        "Privilege": "Privilege",
+        "selectPrivilege": "Seleccionar Privilege",
+        "noPrivilege": "No se encontraron opciones de Privilege",
+        "yes": "SI",
+        "no": "NO",
+        "typeShippingSection": "Tipo de envío",
+        "selectTypeShipping": "Seleccionar el tipo de envío",
+        "noTypeShipping": "No se encontraron tipos de envío",
+        "paymentType": "Tipo de pago",
+        "selectPaymentType": "Seleccionar el tipo de pago",
+        "noPaymentType": "No se encontraron tipos de pago",
+        "deferredPayment": "Pago aplazado",
+        "selectDeferredPayment": "Seleccionar el pago aplazado",
+        "noDeferredPayment": "No se encontraron opciones de pago aplazado",
+        "installments": "Cuotas",
+        "selectInstallments": "Seleccionar cuotas",
+        "noInstallments": "Sin opciones de cuotas",
+
+        "fieldsPaymentDynamic": {
+            "titularTarjeta": "Titular",
+            "numTarjeta": "Número",
+            "caducidadTarjeta": "Caducidad",
+            "codVerificacion": "CVV",
+            "importeTarjeta": "Importe",
+            
+            "titularCheque": "Titular del cheque",
+            "bancoCheque": "Banco",
+            "numCheque": "Número de cheque",
+            "importeCheque": "Importe",
+
+            "importeEfectivo": "Importe"
+        },
+
+        "deferredPaymentModal": {
+            "installmentsConfigured": "Cuotas configuradas",
+            "chequesConfigured": "Cheques configurados",
+            "configureInstallments": "Configurar {{count}} cuotas",
+            "configureChequePayments": "Configurar {{count}} cheques",
+            "editSuffix": "(editar)",
+            "cashNotAllowedDeferred": "No se aceptan pagos aplazados con efectivo",
+            "configureCheques": "Configurar cheques",
+            "configureCardInstallments": "Configurar cuotas de tarjeta"
+        },
+
+        "toolTipDatePayment": "Fecha de pago: ",
+        "submit": "Crear usuario",
+        "success": "Usuario creado correctamente",
+        "error": "Error al crear el usuario",
+        "requiredField": "Este campo es obligatorio",
+
+        "notify": {
+            "sourceNotFound": "Origen \"{{value}}\" no encontrado",
+            "customerNotFound": "Cliente {{code}} - {{name}} no encontrado",
+            "noAction": "Debes seleccionar una acción",
+            "noCustomer": "Debes seleccionar un cliente",
+            "phoneNormalized": "Teléfono formateado al estándar internacional",
+            "invalidFixedForCountry": "Teléfono fijo inválido para el país seleccionado",
+            "invalidMobileForCountry": "Móvil inválido para el país seleccionado",
+            "invalidEmail": "Email inválido",
+
+            "checkFixed": "Revisa el teléfono fijo",
+            "checkMobile": "Revisa el móvil",
+            "checkEmail": "Revisa el email",
+
+            "noLines": "El pedido debe tener al menos una línea con cantidad",
+            "noPriority": "Debes seleccionar un tipo de envío",
+            "noPaymentTypes": "Debes seleccionar un tipo de pago",
+            "noInstallments": "Debes configurar las cuotas",
+            "invalidCardNumber": "Número de tarjeta no válido",
+
+            "saved": "Pedido guardado",
+            "saving": "Guardando pedido…",
+            "errorSaving": "Error al guardar el pedido",
+            "createSuccess": "Pedido creado correctamente",
+            "createError": "Error al crear el pedido",
+            "orderCreated": "Pedido {{reference}} creado",
+            "orderUpdated": "Pedido actualizado"
+   
+        },
+
+        "notes": {
+            "addNotes": "Añadir observaciones",
+            "hasNotes": "Observaciones configuradas",
+            "modalTitle": "Observaciones del pedido",
+            "internal": "Internas",
+            "external": "Externas",
+            "internalLabel": "Observaciones internas (solo personal)",
+            "externalLabel": "Observaciones externas (visibles para el cliente)",
+            "internalPlaceholder": "Observaciones internas del pedido, notas para el personal, instrucciones especiales...",
+            "externalPlaceholder": "Observaciones visibles para el cliente: instrucciones de entrega, dedicatorias..."
+        },
+
+        "modifyAddressButton": "Modificar dirección",
+        "modifiedAddressButton": "¡Dirección modificada!",
+        "modifyAddress": "Modificar dirección de ",
+        "billingAddress": "facturación",
+        "shippingAddress": "envío",
+        "name": "Nombre",
+        "namePlaceholder": "Nombre completo",
+        "address1": "Dirección 1",
+        "address1Placeholder": "Calle, número, piso...",
+        "address2": "Dirección 2",
+        "address2Placeholder": "Edificio, escalera...",
+        "address3": "Dirección 3",
+        "address3Placeholder": "Información adicional",
+        "address4": "Dirección 4",
+        "address4Placeholder": "Información adicional",
+        "address5": "Dirección 5",
+        "address5Placeholder": "Información adicional",
+        "postalCode": "Código postal",
+        "postalCodePlaceholder": "CP",
+        "city": "Población",
+        "cityPlaceholder": "Ciudad o pueblo",
+        "mobile": "Teléfono móvil",
+        "mobilePlaceholder": "Número de móvil",
+
+        "taxBreakDown": {
+            "title1": "Desglose BI + IVA alimentación:",
+            "bi1": "Base imponible alimentación",
+            "tva1": "IVA alimentación",
+            "title2": "Desglose BI + IVA general:",
+            "bi2": "Base imponible general",
+            "tva2": "IVA general",
+            "totalSum": "Total de impuestos"
+        }
+    }
+}

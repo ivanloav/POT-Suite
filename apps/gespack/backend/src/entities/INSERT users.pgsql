@@ -1,0 +1,1 @@
+INSERT INTO users ("name", "email", "password", "isAdmin", "isCustomer", "isActive") values ('Ivan', 'ivanloav@gmail.com', '123', true, false, true);

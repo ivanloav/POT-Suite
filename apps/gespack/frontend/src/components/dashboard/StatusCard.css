@@ -1,0 +1,91 @@
+/* frontend/src/components/dashboard/StatusCard.css - MANTENER ORIGINAL */
+.status-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background-color: #f4b400;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 👈 MANTENER hover original */
+.status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 👈 ESTILOS MÍNIMOS durante drag - NO INTERFERIR con layout */
+[data-swapy-item].swapy-item-dragging .status-card {
+  opacity: 0.9;
+  z-index: 1000;
+}
+
+.status-card-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+  justify-content: flex-end;
+  margin-bottom: 5px;
+}
+
+.status-count {
+  font-size: 60px;
+  font-weight: bold;
+}
+
+.status-title {
+  font-size: 18px;
+}
+
+.status-card-footer {
+  height: 35px;
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.status-footer-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media only screen and (max-width: 1920px) {
+  .status-card-main {
+    padding: 0 16px;
+  }
+
+  .status-count {
+    font-size: var(--text-5xl);
+  }
+
+  .status-title {
+    font-size: var(--text-sm);
+  }
+
+  .status-card-footer {
+    height: 30px;
+    padding: 0 16px;
+  }
+
+  .status-footer-label {
+    font-size: var(--text-xs);
+  }
+}

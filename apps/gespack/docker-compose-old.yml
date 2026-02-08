@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile.dev
+    container_name: gespack_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/node_modules:/app/node_modules
+    command: npm run dev -- --host
+    networks:
+      - shared-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: gespack_backend
+    restart: always
+    ports:
+      - "3001:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - shared-network
+
+  docs:
+    build:
+      context: ./docs
+    container_name: gespack_docs
+    ports:
+      - "3002:3001"
+    command: npm run serve
+    networks:
+      - shared-network
+
+  nginx:
+    build: ./nginx
+    container_name: gespack_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+      - docs
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

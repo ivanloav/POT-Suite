@@ -1,0 +1,24 @@
+CREATE TABLE product_bundles (
+    bundle_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                 -- ID único para cada item del bundle
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece el bundle
+    bundle_id INT,                                                                  -- ID_BUNDLE (Identificador del bundle)
+    product_id BIGINT NOT NULL,                                                     -- ID del producto (clave foránea a products)
+    sku_bundle TEXT,                                                                -- SKU_BUNDLE
+    sku_wms TEXT,                                                                   -- SKU_WMS
+    qty INT,                                                                        -- QTY (Cantidad)
+    date_creation TIMESTAMP,                                                        -- DATE_CREATION (Fecha de creación)
+    created_by TEXT,                                                                -- CREATED_BY (Creado por)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIF_BY (Modificado por)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+    is_active BOOLEAN DEFAULT FALSE,                                                -- IS_ACTIVE (Activo)
+    
+    UNIQUE (site_id, bundle_id),                                          -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, product_id) REFERENCES products(site_id, product_id) ON DELETE RESTRICT     -- Clave foránea a products
+);
+
+DROP INDEX IF EXISTS idx_bundles_sku_bundle CASCADE;
+CREATE INDEX idx_bundles_sku_bundle ON product_bundles (sku_bundle);                        -- Índice para mejorar las búsquedas
+DROP INDEX IF EXISTS idx_bundles_sku_wms CASCADE;
+CREATE INDEX idx_bundles_sku_wms ON product_bundles (sku_wms);                              -- Índice para mejorar las búsquedas

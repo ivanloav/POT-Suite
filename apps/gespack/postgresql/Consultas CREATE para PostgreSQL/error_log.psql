@@ -1,0 +1,35 @@
+-- Crear el tipo ENUM si no existe
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'error_severity') THEN
+    CREATE TYPE error_severity AS ENUM ('info', 'warning', 'error', 'critical');
+  END IF;
+END$$;
+
+-- Crear la tabla error_log
+DROP TABLE IF EXISTS error_log CASCADE;
+CREATE TABLE error_log (
+    error_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    event_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- FECHA
+    order_reference TEXT,                              -- PEDIDO
+    description TEXT,                                  -- DESCRIPCION
+    section TEXT,                                      -- SECCION
+    user_name TEXT,                                    -- USUARIO
+    severity error_severity DEFAULT 'error',           -- Gravedad (ENUM: info, warning, error, critical)
+    is_saved BOOLEAN NOT NULL DEFAULT FALSE,           -- GRABADO
+    is_modified BOOLEAN NOT NULL DEFAULT FALSE,        -- MODIFICADO
+    is_invoiced BOOLEAN NOT NULL DEFAULT FALSE,        -- FACTURADO
+    is_resolved BOOLEAN NOT NULL DEFAULT FALSE,        -- Solucionado o pendiente
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_by TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_error_log_site_order ON error_log (site_id, order_reference);
+CREATE INDEX idx_error_log_site_section ON error_log (site_id, section);
+CREATE INDEX idx_error_log_site_severity ON error_log (site_id, severity);
+CREATE INDEX idx_error_log_site_resolved ON error_log (site_id, is_resolved);

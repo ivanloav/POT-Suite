@@ -1,0 +1,14 @@
+CREATE TABLE action_priority_types (
+    action_priority_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,     -- ID único del tipo de prioridad
+    site_id BIGINT NOT NULL,                                                -- ID del sitio
+    priority_name TEXT NOT NULL,                                            -- Nombre del tipo de prioridad (e.g., "NORMAL", "EXPRESS")
+    description TEXT,                                                      -- Descripción del tipo de prioridad
+    is_active BOOLEAN DEFAULT TRUE,                                              -- Indica si el tipo de prioridad está activo
+    created_by TEXT,                                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                         -- FECHA_CREACION
+    updated_by TEXT,                                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                        -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, priority_name),                                    -- Clave primaria compuesta
+    UNIQUE (site_id, action_priority_id)  -- 🔧 Añadir esto
+);

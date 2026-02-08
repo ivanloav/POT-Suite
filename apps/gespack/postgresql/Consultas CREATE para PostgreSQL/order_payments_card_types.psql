@@ -1,0 +1,12 @@
+CREATE TABLE order_payments_card_types (
+    card_type_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    card_type_name TEXT NOT NULL UNIQUE,                                    -- Nombre del tipo de tarjeta, como 'VISA', 'MasterCard', etc.
+    created_by TEXT,                                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                         -- FECHA_CREACION
+    modified_by TEXT,                                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                         -- FECHA_MODIFICACION
+);
+
+-- Índices para optimizar consultas
+DROP INDEX IF EXISTS idx_order_payments_card_types_name CASCADE;
+CREATE INDEX idx_order_payments_card_types_name ON order_payments_card_types (card_type_name);

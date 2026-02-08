@@ -1,0 +1,39 @@
+DROP TABLE IF EXISTS vat_yearly;
+CREATE TABLE vat_yearly (
+    vat_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+
+    vat_type INT NOT NULL,       -- Tipo_IVA
+    vat_code TEXT,                -- IVA
+    vat_value DECIMAL(10, 3),          -- VALOR
+    vat_description TEXT,         -- DESCRIPCION
+
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, vat_type)
+);
+
+DROP INDEX IF EXISTS idx_vat_yearly_vat_id CASCADE;
+CREATE INDEX idx_vat_yearly_vat_id ON vat_yearly (site_id, vat_id);
+
+DROP INDEX IF EXISTS idx_vat_yearly_vat_type CASCADE;
+CREATE INDEX idx_vat_yearly_vat_type ON vat_yearly (site_id, vat_type);
+
+DROP INDEX IF EXISTS idx_vat_yearly_vat_code CASCADE;
+CREATE INDEX idx_vat_yearly_vat_code ON vat_yearly (site_id, vat_code);
+
+DROP INDEX IF EXISTS idx_vat_yearly_vat_value CASCADE;
+CREATE INDEX idx_vat_yearly_vat_value ON vat_yearly (site_id, vat_value);
+
+INSERT INTO vat_yearly (site_id, vat_type, vat_code, vat_value, vat_description, created_by)
+VALUES (1, 0, 'FR0', 0, 'SIN IVA Regalos', 'admin');
+
+INSERT INTO vat_yearly (site_id, vat_type, vat_code, vat_value, vat_description, created_by)
+VALUES (1, 1, 'FR5', 0.055, 'IVA Alimentario 5,5%', 'admin');
+
+INSERT INTO vat_yearly (site_id, vat_type, vat_code, vat_value, vat_description, created_by)
+VALUES (1, 2, 'FR20', 0.2, 'IVA General 20%', 'admin');
+select * from vat_yearly

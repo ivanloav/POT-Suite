@@ -1,0 +1,53 @@
+DROP TABLE IF EXISTS order_payments CASCADE;
+
+CREATE TABLE order_payments (
+    order_payments_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+
+    payment_type TEXT NOT NULL,           -- efectivo, tarjeta, cheque, aplazado, etc.
+    is_deferred BOOLEAN DEFAULT FALSE,    -- ¿Pago aplazado?
+    schedule_count INT NOT NULL DEFAULT 1 CHECK (schedule_count >= 1 AND schedule_count <= 4),
+    holder_name TEXT,
+    amount NUMERIC(19,4) NOT NULL,        -- Importe del pago total (suma de plazos si aplazado)
+
+    -- Campos para cheque
+    bank_name TEXT,
+    cheque_number TEXT,
+
+    -- Campos para tarjeta
+    card_type_id INT,
+    card_number BIGINT,
+    expiration_date VARCHAR(5),
+    security_code INT,
+
+    -- Estado del pago
+    is_unpaid BOOLEAN DEFAULT FALSE,
+    unpaid_amount NUMERIC(19,4),
+    unpaid_date DATE,
+    is_recovered BOOLEAN DEFAULT FALSE,
+    recovered_amount NUMERIC(19,4),
+    recovery_date DATE,
+    is_uncollectible BOOLEAN DEFAULT FALSE,
+    uncollectible_amount NUMERIC(19,4),
+    uncollectible_date DATE,
+
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, order_payments_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    -- FOREIGN KEY (site_id, order_id) REFERENCES orders(site_id, order_id) ON DELETE RESTRICT,
+    FOREIGN KEY (card_type_id) REFERENCES order_payments_card_types(card_type_id) ON DELETE CASCADE
+);
+
+DROP INDEX IF EXISTS idx_order_payments_order_id CASCADE;
+CREATE INDEX idx_order_payments_order_id ON order_payments (site_id, order_id);
+
+DROP INDEX IF EXISTS idx_order_payments_payment_type CASCADE;
+CREATE INDEX idx_order_payments_payment_type ON order_payments (site_id, payment_type);
+
+DROP INDEX IF EXISTS idx_order_payments_deferred CASCADE;
+CREATE INDEX idx_order_payments_deferred ON order_payments (site_id, is_deferred);

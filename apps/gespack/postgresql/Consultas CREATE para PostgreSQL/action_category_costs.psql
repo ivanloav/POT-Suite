@@ -1,0 +1,18 @@
+CREATE TABLE action_category_costs (
+    category_cost_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- PK técnica
+    site_id BIGINT NOT NULL,                                            -- Cliente
+    category_cost_name TEXT NOT NULL,                                   -- Nombre del coste
+    action_category_id INT NOT NULL,                                    -- Categoría
+    action_priority_id INT NOT NULL,                                    -- Tipo de prioridad
+    shipping_cost NUMERIC(19, 4) NOT NULL,                              -- Coste de envío
+    mandatory_fee NUMERIC(19, 4) DEFAULT 0,                             -- Tarifas adicionales
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, category_cost_name),                               -- Clave de negocio única por cliente
+
+    FOREIGN KEY (site_id, action_category_id) REFERENCES action_categories(site_id, action_category_id) ON DELETE CASCADE,
+    FOREIGN KEY (site_id, action_priority_id) REFERENCES action_priority_types(site_id, action_priority_id) ON DELETE CASCADE
+);

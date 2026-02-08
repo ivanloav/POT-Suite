@@ -1,0 +1,81 @@
+.dashboard-content {
+  flex: 1;
+  text-align: center;
+  padding: 15px 35px;
+}
+
+/* UNA SOLA definición, estable */
+.dashboard-grid {
+  display: grid;
+  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-auto-rows: minmax(150px, auto);
+  align-items: stretch;
+}
+
+/* Slot rellena y estira a su hijo */
+[data-swapy-slot],
+.swapy-slot {
+  display: flex;
+  min-height: 100px;
+  align-items: stretch;
+}
+
+/* Item rellena el slot */
+[data-swapy-item],
+.swapy-item {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Toda la card es “handle” y soporta táctil */
+[data-swapy-handle],
+.swapy-handle {
+  display: flex;
+  flex: 1 1 auto;
+  cursor: grab;
+  touch-action: none; /* importante para pointer events en móvil */
+}
+
+/* La card ocupa todo */
+.status-card {
+  width: 100%;
+  height: 100%;
+}
+
+/* Durante drag, no deshabilitamos pointer-events del contenido.
+   Solo evitamos seleccionar texto. */
+.is-dragging {
+  user-select: none;
+}
+
+/* (opcional) resalte visual del slot activo si Swapy lo añade */
+[data-swapy-slot].swapy-slot-active {
+  background: rgba(0, 123, 255, 0.08);
+  border: 2px dashed rgba(0, 123, 255, 0.25);
+  border-radius: 10px;
+}
+
+/* evita que algo dentro de la card bloquee el pointerdown que Swapy necesita */
+[data-swapy-handle] * {
+  pointer-events: auto;
+}
+
+/* opcional: evita drag nativo del navegador (imágenes, etc.) */
+[data-swapy-handle] img {
+  -webkit-user-drag: none;
+}
+
+@media only screen and (min-width: 1650px) {
+  .dashboard-grid { grid-template-columns: repeat(4, minmax(300px, 1fr)); }
+}
+
+@media only screen and (max-width: 1920px) {
+  .dashboard-grid { grid-auto-rows: minmax(120px, auto); }
+}
+@media only screen and (max-width: 768px) {
+  .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
+  .status-card { width: 100%; }
+}

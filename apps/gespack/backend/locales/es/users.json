@@ -1,0 +1,11 @@
+{
+  "list_success": "Usuarios obtenidos correctamente",
+  "create_success": "Usuario creado correctamente",
+  "update_success": "Usuario actualizado correctamente",
+  "delete_success": "Usuario eliminado correctamente",
+  "not_found": "Usuario no encontrado",
+  "error_list": "Error al obtener los usuarios",
+  "error_create": "Error al crear el usuario",
+  "error_update": "Error al actualizar el usuario",
+  "error_delete": "Error al eliminar el usuario"
+}

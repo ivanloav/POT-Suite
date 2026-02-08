@@ -1,0 +1,61 @@
+-- =========================================
+-- order_items con product_id + relaciones
+-- =========================================
+DROP TABLE IF EXISTS order_items CASCADE;
+
+CREATE TABLE order_items (
+    order_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- Identificador único de la línea
+    site_id       BIGINT NOT NULL,                                 -- Sede
+    order_id      BIGINT NOT NULL,                                 -- Pedido
+    line_number   INT,                                             -- Nº de línea dentro del pedido
+
+    -- NUEVO: relación directa al catálogo
+    product_id    BIGINT,                                          -- FK a products (recomendado NOT NULL cuando termines la migración)
+    product_ref   TEXT,                                            -- Referencia legado/informativa
+
+    catalog_ref   TEXT,                                            -- REF_ART
+    catalog_code  TEXT,                                            -- CATALOGO
+    quantity      INT,                                             -- Cantidad
+    product_description TEXT,                                      -- Descripción
+    unit_price    NUMERIC(19, 4),                                  -- Precio unitario
+    line_total    NUMERIC(19, 4),                                  -- Importe total de la línea
+
+    is_abonado           TEXT,                                     -- Estado abonado (si aplica)
+    stock_reserved       BOOLEAN DEFAULT FALSE,                    -- Reserva de stock
+    is_substitute        BOOLEAN DEFAULT FALSE,                    -- Sustitutivo
+    is_unavailable       BOOLEAN DEFAULT FALSE,                    -- Sin artículo
+    apology_phrase       TEXT,                                     -- Frase de disculpa
+    is_supplier_shipped  BOOLEAN DEFAULT FALSE,                    -- Envío de proveedor
+
+    created_by  TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Clave única de negocio (una línea única por pedido)
+    UNIQUE (site_id, order_id, line_number),
+
+    -- FKs
+    FOREIGN KEY (site_id)                REFERENCES sites(site_id)                     ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_id)      REFERENCES orders(site_id, order_id)         ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, product_id)    REFERENCES products(site_id, product_id)     ON DELETE RESTRICT
+);
+
+-- =========================
+-- Índices recomendados
+-- =========================
+-- Búsquedas por pedido
+DROP INDEX IF EXISTS idx_order_items_site_order;
+CREATE INDEX idx_order_items_site_order ON order_items (site_id, order_id);
+
+-- Joins rápidos a producto por product_id
+DROP INDEX IF EXISTS idx_order_items_site_product_id;
+CREATE INDEX idx_order_items_site_product_id ON order_items (site_id, product_id);
+
+-- (Opcional, útil durante transición/migración si aún usas product_ref)
+DROP INDEX IF EXISTS idx_order_items_site_product_ref;
+CREATE INDEX idx_order_items_site_product_ref ON order_items (site_id, product_ref);
+
+-- (Opcional) Si filtras mucho por flags, valora índices parciales:
+CREATE INDEX idx_order_items_stock_reserved ON order_items (site_id, order_id) WHERE stock_reserved = TRUE;
+-- CREATE INDEX idx_order_items_is_unavailable ON order_items (site_id, order_id) WHERE is_unavailable = TRUE;

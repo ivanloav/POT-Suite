@@ -1,0 +1,13 @@
+CREATE TABLE action_categories (
+    action_category_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,         -- ID único de la categoría
+    site_id BIGINT NOT NULL,                                                    -- ID del sitio al que pertenece la categoría
+    category_name TEXT NOT NULL,                                                -- Nombre de la categoría
+    description TEXT,                                                           -- Descripción de la categoría
+    created_by TEXT,                                                            -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             -- FECHA_CREACION
+    updated_by TEXT,                                                           -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                            -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, category_name),                                            -- Clave única compuesta
+    UNIQUE (site_id, action_category_id)  -- 🔧 Añadir esto
+);

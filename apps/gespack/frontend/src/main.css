@@ -1,0 +1,200 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+
+    /* Variables para espaciados consistentes */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 1.5rem;    /* 24px */
+  --space-xl: 2rem;      /* 32px */
+  --space-2xl: 2.5rem;   /* 36px */
+  --space-3xl: 3rem;     /* 40px */
+  --space-4xl: 4rem;     /* 64px */
+  --space-5xl: 5rem;     /* 80px */
+  --space-6xl: 6rem;     /* 96px */
+  --space-7xl: 7rem;     /* 112px */
+  --space-8xl: 8rem;     /* 128px */
+
+  /* Variables para tamaños de texto */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-md: 1rem;       /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;   /* 40px */
+
+    /* Variables para alturas de componentes */
+  --input-height-xs: 1.5rem;     /* 32px */
+  --input-height-sh: 1.75rem;     /* 32px */
+  --input-height-sm: 2rem;     /* 32px */
+  --input-height-md: 2.5rem;   /* 40px */
+  --input-height-lg: 3rem;     /* 48px */
+  --input-height-xl: 3.5rem;   /* 56px */
+  --input-height-2xl: 4rem;    /* 64px */
+  --input-height-3xl: 5rem;    /* 80px */
+  --input-height-4xl: 6rem;    /* 96px */
+
+  --textarea-height-sm: 2rem;  /* 32px */
+  --textarea-height-md: 3rem;  /* 48px */
+  --textarea-height-lg: 4rem;  /* 64px */
+  --textarea-height-xl: 5rem;  /* 80px */
+  --textarea-height-2xl: 6rem; /* 96px */
+  --textarea-height-3xl: 7rem; /* 112px */
+  --textarea-height-4xl: 8rem; /* 128px */
+
+  /* Variables para border radius */
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.375rem;  /* 6px */
+  --radius-lg: 0.5rem;    /* 8px */
+  --radius-xl: 1rem;      /* 16px */
+  
+  /* Variables para colores */
+  --border-color: #d1d5db;
+  --focus-color: #3b82f6;
+  --text-color: #374151;
+  --bg-white: white;
+
+  /* Variables para la topbar */
+  --topbar-height-xs: 1.5rem;   /* 24px */
+  --topbar-height-sm: 2rem;     /* 32px */
+  --topbar-height-md: 2.5rem;   /* 40px */
+  --topbar-height-lg: 3rem;     /* 48px */
+  --topbar-height-xl: 3.5rem;   /* 56px */
+  --topbar-height-2xl: 4rem;    /* 64px */
+  --topbar-height-3xl: 4.5rem;  /* 72px */
+
+  /* Variables para la sidebar */
+  --sidebar-width-md: 5rem;     /* 80px */
+  --sidebar-width-lg: 20rem;    /* 320px */
+  
+  --sidebar-icon-size: 24px;
+  --sidebar-label-font-size: 12px;
+
+  --text-clear-site-dropdown-lg: 2rem;
+
+  --text-sidebar-md: 1rem;       /* 16px */
+  --text-sidebar-lg: 1.125rem;   /* 18px */
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  height: 100%;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  background: #fff !important;
+  overflow-x: hidden !important;
+  min-height: 100dvh;
+  /* Para iOS notch y barras */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  font-size: 16px
+}
+
+  /* Forzar fondo blanco y texto negro en todos los inputs, selects y textareas */
+  input, select, textarea {
+    background: #fff !important;
+    color: #222 !important;
+    caret-color: #222 !important;
+  }
+
+  /* También para formularios y campos dentro de modales */
+  .form-control,
+  .base-form input,
+  .base-form select,
+  .base-form textarea {
+    background: #fff !important;
+    color: #222 !important;
+    caret-color: #222 !important;
+  }
+
+  /* Para autofill en iOS/Safari */
+  input:-webkit-autofill {
+    background: #fff !important;
+    color: #222 !important;
+    -webkit-text-fill-color: #222 !important;
+    box-shadow: 0 0 0px 1000px #fff inset !important;
+  }
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  background-color: #0c1b33;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (max-height: 1080px) {
+  :root {
+    --topbar-height-3xl: 3rem;
+    --sidebar-width-md: 5rem;     /* 80px */
+    --sidebar-width-lg: 16rem;    /* 256px */
+
+    --text-sidebar-md: 0.65rem;       /* 16px */
+    --text-sidebar-lg: 0.85rem;   /* 18px */
+    
+    --text-clear-site-dropdown-lg: 1.5rem; /* 16px */
+
+    --sidebar-icon-size: 20px;
+    --sidebar-label-font-size: 8px;
+  } 
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    font-size: 16px;
+  }
+}
+

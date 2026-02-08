@@ -1,0 +1,436 @@
+/* ---------- CSS VARIABLES ---------- */
+:root {
+  --bg-white: #ffffff;
+  --border-color: #e5e7eb;
+  --focus-color: #3b82f6;
+  --text-color: #111827;
+  --radius-xl: 0.75rem;
+  --space-md: 1rem;
+  --text-3xl: 1.875rem;
+  --color-white: #ffffff;
+  --color-border: #e5e7eb;
+  --title-height-xs: .85rem; 
+  --title-height-sm: 1.25rem; 
+  --title-height-md: 1.5rem; 
+}
+
+/* ---------- FORM AS PAGE (NO MODAL) ---------- */
+.form-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0; /* Permite que flexbox funcione correctamente */
+}
+
+/* ---------- BODY GRID ---------- */
+.shell-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Toma todo el espacio disponible */
+  overflow: visible; /* Visible para permitir dropdowns */
+  padding: 0 var(--space-xl); /* Solo padding horizontal */
+}
+
+/* Crear un contenedor interno con scroll para que el contenido tenga scroll pero los dropdowns no se corten */
+.content {
+  display: grid;
+  grid-template-columns: 7fr 4fr;
+  min-width: 0;
+  gap: 20px;
+  align-items: flex-start; /* Alinear al inicio para evitar que se estiren */
+}
+
+/* Contenedor principal de secciones (izquierda) - VERTICAL */
+.main-sections {
+  display: flex;
+  flex-direction: column; /* VERTICAL: una encima de la otra */
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Contenedor de secciones secundarias (derecha) - VERTICAL */
+.side-sections {
+  display: flex;
+  flex-direction: column; /* VERTICAL: una encima de la otra */
+  gap: 20px;
+  min-width: 300px; /* Ancho mínimo para mantener legibilidad */
+}
+
+/* ---------- SECTIONS ---------- */
+.section {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.section.section--no-border {
+  border: none;
+  padding: 0;
+}
+
+.section-title {
+  background: #f3f4f6;
+  border-radius: 16px 16px 0 0;
+  color: #1f2937;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  margin: -12px -12px 12px -12px;
+  padding: 6px 16px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+  height: var(--title-height-md);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.section-title-with-button {
+  justify-content: space-between;
+}
+
+.section-title-with-button .collapse-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: var(--text-xs);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.section-title-with-button .collapse-btn:hover {
+  color: #374151;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Cuando la sección de líneas está colapsada, solo se ve la cabecera gris */
+.section--collapsed {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* La cabecera no debe “invadir” márgenes ni dejar hueco debajo */
+.section--collapsed .section-title {
+  margin: 0;                 /* quita el -12px y el margen inferior */
+  border-radius: 16px;       /* redondeo completo, ya que no hay caja debajo */
+  border-bottom: none;       /* evita línea extra bajo la cabecera */
+}
+
+/* El sentinela no debe aportar altura visual */
+.section--collapsed .section-collapse {
+  display: none;             /* ya lo haces con data-collapsed, por si acaso */
+}
+
+/* Por si el sentinela pudiera dejar rastro (normalmente no): */
+.section--collapsed > [tabindex="0"] {
+  height: 0;
+  overflow: hidden;
+}
+
+/* Borde rojo para cualquier control con error */
+.field [aria-invalid="true"],
+.field .is-invalid,
+.ss-invalid,
+.ss-invalid input,
+.ss-invalid .searchable-select-input {
+  border-color: #ef4444 !important; /* rojo-500 */
+}
+
+/* ---------- SIMPLE GRIDS ---------- */
+.grid {
+  display: grid;
+  gap: 8px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- FIELDS ---------- */
+.field {
+  display: grid;
+  grid-template-columns: 1fr 4fr;
+  gap: 6px;
+  align-items: center;
+  padding-left: 8px;
+}
+
+.field > label {
+  color: #374151;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* Fallback para elementos que aún no tengan la clase */
+.field input,
+.field select,
+.field textarea {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #111827;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field input,
+.field select {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #111827;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  padding: 5px 12px; /* Padding uniforme para todos */
+  height: var(--input-height-lg); /* Altura fija uniforme para tamaños grandes */
+  box-sizing: border-box;
+  font-size: var(--text-lg);
+}
+
+/* Estilos específicos para placeholders - todos los inputs del formulario */
+.field input::placeholder,
+.form-input::placeholder {
+  font-size: var(--text-lg) !important;
+  color: #9ca3af;
+  opacity: 1; /* Asegurar opacidad en todos los navegadores */
+}
+
+/* Compatibilidad con diferentes navegadores */
+.field input::-webkit-input-placeholder,
+.form-input::-webkit-input-placeholder {
+  font-size: var(--text-lg) !important;
+  color: #9ca3af;
+}
+
+.field input::-moz-placeholder,
+.form-input::-moz-placeholder {
+  font-size: var(--text-lg) !important;
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.field input:-ms-input-placeholder,
+.form-input:-ms-input-placeholder {
+  font-size: var(--text-lg) !important;
+  color: #9ca3af;
+}
+
+.field textarea {
+  padding: 8px 12px;
+}
+
+.field textarea {
+  resize: vertical;
+  font-family: inherit;
+  font-size: var(--text-lg);
+  line-height: 1.75;
+}
+
+/* Focus states para la clase común */
+.form-input:focus {
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  outline: none;
+}
+
+/* Fallback focus para elementos sin la clase */
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  outline: none;
+}
+
+.field-textarea textarea {
+  white-space: pre-wrap;
+}
+
+/* Estilos específicos para selects con la clase form-input */
+.form-input.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-right: 36px;
+}
+
+/* Fallback para selects sin clase */
+.field select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-right: 36px;
+}
+
+.extra-info-customer {
+  display: grid;
+  grid-template-columns: 1fr 4fr;
+  gap: 8px;
+  align-items: center;
+  padding-left: 8px;
+}
+
+.section-collapse[data-collapsed="true"] {
+  display: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+  padding: 10px 14px;
+  transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  border-color: #059669;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* ---------- INFO LABEL RED CIRCLE ---------- */
+.info-label {
+  background: radial-gradient(circle, #ff5252 0%, #ffb3b3 70%, #fff 100%);
+  color: #222;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  display: inline-block;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(255,82,82,0.08);
+  text-align: center;
+}
+
+/* Media query simplificada para móviles - solo para ajustes de responsive del formulario */
+@media (max-width: 1200px) {
+  .shell-body {
+    flex-direction: column;
+  }
+
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-customer {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+  .grid-customer .address {
+    grid-row: auto; /* sin spanning en una sola columna */
+  }
+}
+
+/* Responsivo: En pantallas pequeñas volver a layout vertical */
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column !important;
+  }
+  
+  .main-sections,
+  .side-sections {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* ---------- DOCUMENT UPLOADER IN FORM ---------- */
+.order-document-uploader {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-white);
+}
+
+.order-document-uploader h4 {
+  color: var(--text-color);
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.order-document-uploader .drop-zone {
+  min-height: 120px;
+  border-style: dashed;
+  border-width: 2px;
+}
+
+.order-document-uploader .auto-scan-section {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 1rem;
+}
+
+/* Ajustar altura de inputs según resolución de pantalla - CLASE COMÚN */
+@media (max-height: 1080px) {
+  .field input,
+  .field select {
+    padding: 3px 12px; /* Padding uniforme para todos */
+    height: var(--input-height-sm); /* Altura fija uniforme para tamaños grandes */
+    box-sizing: border-box;
+    font-size: var(--text-sm) !important;
+  }
+  .field input::placeholder {
+    font-size: var(--text-sm) !important;
+  }
+  .section-title { 
+    font-size: var(--text-sm) !important; 
+    height: var(--title-height-xs); /* Altura fija para consistencia */
+  }
+
+  .field > label { font-size: var(--text-sm); }
+
+  .btn {
+    padding: 8px 12px !important; /* Botones más compactos */
+  }
+
+  .main-sections,
+  .side-sections {
+    gap: 10px;
+  }
+}
+
+/* Integración responsive en el formulario */
+@media (max-width: 1024px) {
+  .order-document-uploader {
+    margin-top: 1rem;
+  }
+  
+  .order-document-uploader .drop-zone {
+    min-height: 100px;
+    padding: 1rem;
+  }
+}

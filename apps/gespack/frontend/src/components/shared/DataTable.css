@@ -1,0 +1,561 @@
+/* ===== Container ===== */
+.data-table-container {
+  padding: 2rem;
+  background-color: #ffffff;
+  /*min-height: 100dvh;*/
+}
+
+.data-table-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-md);
+}
+
+/* ===== Toolbar en cabecera de la tabla ===== */
+.data-table-toolbar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #374151;
+  margin: 8px 0 12px;
+  flex-wrap: wrap; /* evita desbordes en móvil */
+}
+
+.data-table-total {
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* Tamaño base para toda la tabla y sus elementos */
+.data-table-container table, 
+.data-table-container th, 
+.data-table-container td, 
+.data-table-container input, 
+.data-table-container select, 
+.data-table-container textarea, 
+.filter-input, .status-filter-select {
+  font-size: var(--text-lg) !important;
+  font-family: inherit !important;
+}
+
+/* Placeholders específicos */
+input::placeholder,
+select::placeholder {
+  font-size: var(--text-sm) !important; /* Mismo tamaño que el contenido */
+  color: #9ca3af !important; /* Color más suave para placeholder */
+  opacity: 1 !important;
+}
+
+/* Accesibilidad: etiqueta oculta para lectores de pantalla */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.data-table-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2937;
+}
+
+.data-table-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.data-table-limit label {
+  font-weight: 500;
+}
+
+.data-table-limit select {
+  padding: 4px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+/* acciones en la toolbar */
+.data-table-toolbar .data-table-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.data-table-toolbar .btn {
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.data-table-toolbar .btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.data-table-toolbar .btn:active {
+  transform: translateY(1px);
+}
+
+.data-table-toolbar .btn.btn-refresh, .btn.btn-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+
+/* Botón Refresh con degradado azul */
+.data-table-toolbar .btn.btn-refresh {
+  color: #ffffff !important;
+  border-color: transparent !important;
+  background: linear-gradient(90deg, #07d425 0%, #5fe150e3 100%) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), inset 0 -1px 0 rgba(255,255,255,.08);
+}
+
+/* Hover específico para que no lo pise la regla genérica de .btn:hover */
+.data-table-toolbar .btn.btn-refresh:hover {
+  background: linear-gradient(90deg, #1af46eb2 0%, #25eb56a5 100%) !important; /* azul -> azul intenso */
+  border-color: transparent !important;
+  transform: translateY(-1px); /* 👈 AÑADIR */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* 👈 AÑADIR */
+}
+
+/* Active/pressed: más oscuro y con pequeña “presión” */
+.data-table-toolbar .btn.btn-refresh:active {
+  transform: translateY(1px);
+  background: linear-gradient(90deg, #08ec2a 0%, #5fe150 100%) !important;
+  border-color: transparent !important;
+}
+
+/* Accesibilidad: foco visible */
+.data-table-toolbar .btn.btn-refresh:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.35); /* halo azul */
+}
+
+/* Botón Reset con degradado rojo */
+.data-table-toolbar .btn.btn-reset {
+  color: #ffffff !important;
+  border-color: transparent !important;
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%) !important; /* rojo -> rojo intenso */
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), inset 0 -1px 0 rgba(255,255,255,.08);
+}
+
+/* Hover específico para que no lo pise la regla genérica de .btn:hover */
+.data-table-toolbar .btn.btn-reset:hover {
+  background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%) !important;
+  border-color: transparent !important;
+  transform: translateY(-1px); /* 👈 AÑADIR */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* 👈 AÑADIR */
+}
+
+/* Active/pressed */
+.data-table-toolbar .btn.btn-reset:active {
+  transform: translateY(1px);
+  background: linear-gradient(90deg, #b91c1c 0%, #991b1b 100%) !important;
+  border-color: transparent !important;
+}
+
+/* Accesibilidad: foco visible */
+.data-table-toolbar .btn.btn-reset:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239,68,68,.35);
+}
+
+/* ===== Table ===== */
+.data-table-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+/* ===== Lock ID column width and prevent collapse ===== */
+.data-table-table col.col-id {
+  width: 80px !important;
+}
+.data-table-table th.col-id,
+.data-table-table td.col-id {
+  width: 80px;
+  min-width: 60px; /* matches MIN_W.userId */
+  max-width: 120px;
+}
+
+.data-table-table th,
+.data-table-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mejora visual del header para mejor contraste con el redimensionador */
+.data-table-table-resizable th {
+  background-color: #374151;
+  color: #fff;
+  font-weight: 500;
+  position: relative;
+  user-select: none;
+  /* Redimensionador en el borde derecho usando pseudo-elemento */
+}
+
+/* Área de redimensionamiento visual en el borde derecho */
+.data-table-table-resizable th::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100%;
+  background: rgba(96,165,250,0.2);
+  border-right: 2px solid #60a5fa;
+  transition: background 0.2s, border-color 0.2s;
+  z-index: 1000;
+  pointer-events: none; /* El evento se maneja en el th */
+}
+
+/* Cambiar cursor cuando se pasa el mouse por el área de redimensionamiento */
+.data-table-table-resizable th:hover::after {
+  background: rgba(96,165,250,0.4);
+  border-right: 2px solid #2563eb;
+}
+
+/* Cursor específico para el área de redimensionamiento */
+.data-table-table-resizable th {
+  cursor: default;
+}
+
+.data-table-table-resizable th:hover {
+  cursor: default;
+}
+
+/* JavaScript agregará esta clase cuando esté en el área de resize */
+.data-table-table-resizable th.resize-area {
+  cursor: col-resize !important;
+}
+
+.data-table-table tr:nth-child(even) td {
+  background-color: #f3f4f6;
+}
+
+/* ===== Column resizing ===== */
+/* El redimensionamiento ahora se maneja directamente en el th con ::after */
+
+/* Solo el icono de orden tiene cursor pointer y feedback visual */
+.data-table-sort-icon {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0 4px;
+  user-select: none;
+}
+.data-table-sort-icon:hover {
+  color: #60a5fa;
+}
+
+body.resizing-columns {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* ===== Filters / messages / pagination ===== */
+.data-table-filter-input {
+  display: block;
+  width: 100%;
+  min-width: 0;           /* Permite que respete el ancho de la columna */
+  max-width: 100%;
+  box-sizing: border-box;  /* Incluye padding/borde en el ancho */
+  padding: 8px 10px;
+}
+
+/* Forzar que todos los filtros ocupen el 100% del th */
+.data-table-filter-row th .data-table-filter-input,
+.data-table-filter-row th .date-range-picker {
+  width: 100% !important;
+}
+
+/* Ensure the react-datepicker wrappers fill the entire header cell width */
+.data-table-filter-row th .react-datepicker-wrapper,
+.data-table-filter-row th .react-datepicker__input-container,
+.data-table-filter-row th .date-range-wrapper {
+  width: 100% !important;
+  display: block;
+}
+
+/* Calendar icon inside the date range input */
+.data-table-filter-row th .date-range-wrapper {
+  position: relative; /* allows pseudo-element positioning */
+}
+
+/* Add right padding so text doesn't overlap the icon */
+.data-table-filter-row th .date-range-wrapper .date-range-picker {
+  padding-right: 36px; /* space for the calendar icon */
+}
+
+/* Draw the calendar icon on the right side */
+.data-table-filter-row th .date-range-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  opacity: 0.85;
+  pointer-events: none; /* keep input fully clickable */
+  /* calendar SVG (dark stroke) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+}
+
+/* Focus state for better affordance */
+.data-table-filter-row th .date-range-picker:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .35);
+  border-color: #2563eb !important;
+}
+.data-table-filter-row th .react-datepicker__input-container input,
+.data-table-filter-row th .date-range-picker {
+  width: 100% !important;
+  display: block;
+  box-sizing: border-box;
+}
+
+.data-table-status {
+  padding: 16px;
+}
+
+.data-table-error {
+  color: #b00020;
+}
+
+.data-table-pagination {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.data-table-page-indicator {
+  padding: 0 8px;
+  color: black;
+}
+
+.data-table-pagination button {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: #374151;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.data-table-pagination button:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.data-table-pagination button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.data-table-pagination button.is-active {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== Tarjeta de filtros/table header con bordes redondeados visibles en iOS ===== */
+.data-table-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+  overflow: hidden; /* un único borde para toolbar + tabla */
+}
+
+/* Toolbar interna dentro de la tarjeta (mismo fondo, sin borde propio) */
+.data-table-card .data-table-card-toolbar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #374151;
+  border: 0;
+  border-bottom: 1px solid #2d3748; /* separador con la tabla */
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+/* El scroll horizontal solo envuelve a la tabla */
+.data-table-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* El header de la tabla sigue oscuro, pero los filtros dentro van en blanco */
+.data-table-table th {
+  background-color: #374151;
+  color: #fff;
+}
+.data-table-filter-row th {
+  background: #374151; /* mantiene barra de filtros oscura */
+}
+.data-table-filter-row th .data-table-filter-input {
+  background-color: #ffffff !important;  /* inputs blancos sobre header oscuro */
+}
+
+/* Líneas verticales SOLO en el contenido de la tabla */
+.data-table-table tbody td {
+  color: #111827 !important;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Evitar línea al final de la última columna */
+.data-table-table tbody td:last-child {
+  border-right: none;
+}
+
+/* Añade al final de DataTable.css */
+
+/* Cursor pointer para filtros */
+.data-table-filter-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  cursor: text; /* 👈 AÑADIR: Cursor de texto para inputs */
+}
+
+/* Cursor pointer para headers sortables (si no lo tienes ya) */
+
+
+/* Cursor pointer para todos los elementos interactivos en filtros */
+.data-table-filter-row th input,
+.data-table-filter-row th select,
+.data-table-filter-row th .date-range-picker {
+  cursor: pointer; /* 👈 AÑADIR: Para todos los elementos de filtro */
+}
+
+/* Cursor text específico para inputs de texto */
+.data-table-filter-row th input[type="text"],
+.data-table-filter-row th input[type="search"],
+.data-table-filter-row th input[type="email"],
+.data-table-filter-row th input[type="number"],
+.data-table-filter-row th .date-range-picker {
+  cursor: text; /* 👈 AÑADIR: Cursor de texto para inputs de texto */
+}
+
+/* Focus state con cursor correcto */
+.data-table-filter-row th input:focus,
+.data-table-filter-row th select:focus {
+  cursor: text; /* 👈 AÑADIR: Cursor texto cuando está en focus */
+}
+
+.data-table-filter-row th select:focus {
+  cursor: pointer; /* 👈 SOBRESCRIBIR: Select mantiene pointer incluso en focus */
+}
+
+/* ===== Responsive ===== */
+@media (max-height: 1080px) {
+  .data-table-container table, 
+  .data-table-container th, 
+  .data-table-container td, 
+  .data-table-container input, 
+  .data-table-container select, 
+  .data-table-container textarea, 
+  .filter-input, .status-filter-select {
+    font-size: var(--text-sm) !important;
+  }
+}
+@media (max-width: 768px) {
+  .data-table-container {
+    padding: 0rem;
+  }
+
+  /* Drop de 'limit' más estrecho en móvil */
+  .data-table-card .data-table-card-toolbar .data-table-limit select,
+  #limitSel {
+    width: 65px;          /* ajusta a tu gusto */
+    min-width: 55px;
+    font-size: 0.75rem;
+  }
+
+  .data-table-table {
+    font-size: 0.75rem;
+  }
+
+  .data-table-table th,
+  .data-table-table td {
+    padding: 0.5rem;
+  }
+
+  /* 1) Limit primero, a la izquierda */
+  .data-table-card .data-table-limit {
+    order: 1;
+  }
+
+  /* 2) Botones en la MISMA fila que limit (a la derecha) */
+  .data-table-card .data-table-actions {
+    order: 2;
+    margin-left: auto;        /* empuja a la derecha */
+    white-space: nowrap;      /* evita salto entre los dos botones */
+  }
+  .data-table-card .data-table-actions .btn {
+    padding: 6px 8px;         /* compacto para que quepan */
+    font-size: 0.65rem;
+  }
+
+  /* 3) TOTAL debajo de limit (ocupa la fila completa) */
+  .data-table-card .data-table-total {
+    order: 3;
+    flex-basis: 100%;         /* fuerza salto de línea debajo de limit */
+    margin-top: 6px;
+  }
+}
+
+/* Nueva clase para centrar el importe en OrdersList */
+.order-amount-cell-orderslist,
+.order-paymentTypeName-cell-orderslist,
+.order-dateCreated-cell-orderslist {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}

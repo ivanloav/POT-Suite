@@ -1,0 +1,102 @@
+{
+  "sections": { "general": "General", "admin": "Admin" },
+  "badges": { 
+    "hot": "Hot", 
+    "beta": "Beta", 
+    "wip": "WIP"
+  },
+
+  "topbar": {
+    "myAccount": "My account",
+    "logout": "Logout"
+  },
+  
+  "sitedropdown": {
+    "charge": "Loading sites...",
+    "placeholder": "All sites",
+    "button": "Remove selection"
+  },
+
+  "menus": {
+    "dashboard": { "label": "Dashboard" },
+    "orders": {
+      "label": "Orders",
+      "entry": "Order entry - TO DELETE",
+      "edit": "Order modification - TO DELETE",
+      "query": "Order inquiry - TO DELETE",
+      "cancel": "Order cancellation - TO DELETE",
+      "unpaid": "Unpaid orders - TO DELETE",
+      "correspondence - TO DELETE": {
+        "label": "Correspondence - TO DELETE",
+        "pie": "Pie chart - TO DELETE",
+        "line": "Line chart - TO DELETE",
+        "bar": "Bar chart - TO DELETE"
+      }
+    },
+    "collect": "Order collection - TO DELETE",
+    "billing": {
+      "label": "Billing",
+      "pie": "Pie chart - TO DELETE",
+      "line": "Line chart - TO DELETE",
+      "bar": "Bar chart - TO DELETE"
+    },
+    "customers": {
+      "label": "Customers",
+      "create": "Create customers - TO DELETE",
+      "edit": "Edit customers - TO DELETE",
+      "delete": "Delete customers - TO DELETE",
+      "participants": "Participating customers - TO DELETE"
+    },
+    "actions": {
+      "label": "Actions",
+      "create": "Create actions - TO DELETE",
+      "edit": "Edit actions - TO DELETE",
+      "delete": "Delete actions - TO DELETE"
+    },
+    "products": {
+      "label": "Products",
+      "create": "Create products - TO DELETE",
+      "edit": "Edit products - TO DELETE",
+      "delete": "Delete products - TO DELETE"
+    },
+    "returns": {
+      "label": "Returns",
+      "pie": "Pie chart - TO DELETE",
+      "line": "Line chart - TO DELETE",
+      "bar": "Bar chart - TO DELETE"
+    },
+    
+    "reports": {
+      "label": "Listings - TO DELETE",
+      "actions": "Actions - TO DELETE",
+      "orders - TO DELETE": {
+        "label": "Orders - TO DELETE",
+        "all": "All orders - TO DELETE",
+        "byDate": "Orders by date - TO DELETE",
+        "bar": "Bar chart - TO DELETE"
+      },
+      "line": "Line chart - TO DELETE",
+      "bar": "Bar chart - TO DELETE"
+    },
+    "import": "Import files",
+    
+    "admin": {
+      "label": "Admin",
+      "users": {
+        "label": "Users",
+        "stats": "Statistics"
+      },
+      "roles": {
+        "label": "Roles"
+      },
+      "settings": {
+        "label": "Settings",
+        "general": "General settings - TO DELETE",
+        "notifications": "Notifications - TO DELETE"
+      }
+    },
+    "documentation": "Documentation",
+    "calendar": "Calendar",
+    "examples": "Examples"
+  }
+}

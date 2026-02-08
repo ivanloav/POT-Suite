@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev # importante: usar un Dockerfile de desarrollo
+    container_name: gespack_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./package.json:/app/package.json
+      - ./node_modules:/app/node_modules # evita reinstalar paquetes cada vez
+    command: npm run dev
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

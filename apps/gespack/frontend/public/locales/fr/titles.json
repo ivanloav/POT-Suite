@@ -1,0 +1,7 @@
+{ 
+    "dashboard": "Tableau de bord", 
+    "order": "Commandes",
+    "orderList": "Liste des commandes",
+    "orderEntry": "Saisie de commandes",
+    "userManagement": "Gestion des utilisateurs"
+}

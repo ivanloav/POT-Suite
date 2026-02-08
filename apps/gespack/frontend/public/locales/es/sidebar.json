@@ -1,0 +1,102 @@
+{
+  "sections": { "general": "General", "admin": "Admin" },
+  "badges": { 
+    "hot": "Hot", 
+    "beta": "Beta", 
+    "wip": "WIP"
+  },
+
+  "topbar": {
+    "myAccount": "Mi cuenta",
+    "logout": "Cerrar sesión"
+  },
+  
+  "sitedropdown": {
+    "charge": "Cargando sitios...",
+    "placeholder": "Todos los sitios",
+    "button": "Quitar selección"
+  },
+
+  "menus": {
+    "dashboard": { "label": "Tablero" },
+    "orders": {
+      "label": "Pedidos",
+      "entry": "Grabación de pedidos - A ELIMINAR",
+      "edit": "Modificación de pedidos - A ELIMINAR",
+      "query": "Consulta de pedidos - A ELIMINAR",
+      "cancel": "Anulación de pedidos - A ELIMINAR",
+      "unpaid": "Pedidos impagados - A ELIMINAR",
+      "correspondence - A ELIMINAR": {
+        "label": "Correspondencia - A ELIMINAR",
+        "pie": "Gráfico de tarta - A ELIMINAR",
+        "line": "Gráfico de líneas - A ELIMINAR",
+        "bar": "Gráfico de barras - A ELIMINAR"
+      }
+    },
+    "collect": "Cobro de pedidos - A ELIMINAR",
+    "billing": {
+      "label": "Facturación",
+      "pie": "Gráfico de tarta - A ELIMINAR",
+      "line": "Gráfico de líneas - A ELIMINAR",
+      "bar": "Gráfico de barras - A ELIMINAR"
+    },
+    "customers": {
+      "label": "Clientes",
+      "create": "Alta de clientes - A ELIMINAR",
+      "edit": "Modificación de clientes - A ELIMINAR",
+      "delete": "Baja de clientes - A ELIMINAR",
+      "participants": "Clientes participantes - A ELIMINAR"
+    },
+    "actions": {
+      "label": "Acciones",
+      "create": "Alta de acciones - A ELIMINAR",
+      "edit": "Modificación de acciones - A ELIMINAR",
+      "delete": "Baja de acciones - A ELIMINAR"
+    },
+    "products": {
+      "label": "Productos",
+      "create": "Alta de productos - A ELIMINAR",
+      "edit": "Modificación de productos - A ELIMINAR",
+      "delete": "Baja de productos - A ELIMINAR"
+    },
+    "returns": {
+      "label": "Devoluciones",
+      "pie": "Gráfico de tarta - A ELIMINAR",
+      "line": "Gráfico de líneas - A ELIMINAR",
+      "bar": "Gráfico de barras - A ELIMINAR"
+    },
+    
+    "reports": {
+      "label": "Listados - A ELIMINAR",
+      "actions": "Acciones - A ELIMINAR",
+      "orders - A ELIMINAR": {
+        "label": "Pedidos - A ELIMINAR",
+        "all": "Todos los pedidos - A ELIMINAR",
+        "byDate": "Pedidos por fecha - A ELIMINAR",
+        "bar": "Gráfico de barras - A ELIMINAR"
+      },
+      "line": "Gráfico de líneas - A ELIMINAR",
+      "bar": "Gráfico de barras - A ELIMINAR"
+    },
+    "import": "Importar ficheros",
+    
+    "admin": {
+      "label": "Admin",
+      "users": {
+        "label": "Usuarios",
+        "stats": "Estadísticas"
+      },
+      "roles": {
+        "label": "Roles"
+      },
+      "settings": {
+        "label": "Configuración",
+        "general": "Configuración general - A ELIMINAR",
+        "notifications": "Notificaciones - A ELIMINAR"
+      }
+    },
+    "documentation": "Documentación",
+    "calendar": "Calendario",
+    "examples": "Ejemplos"
+  }
+}

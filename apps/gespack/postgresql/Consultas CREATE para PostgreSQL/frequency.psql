@@ -1,0 +1,27 @@
+CREATE TABLE frequency (
+    frequency_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+
+    range_start TEXT,       -- DESDE
+    range_end TEXT,         -- HASTA
+    frequency_value TEXT,   -- FRECUENCIA
+
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, range_start, range_end)
+);
+
+DROP INDEX IF EXISTS idx_frequency_frequency_id CASCADE;
+CREATE INDEX idx_frequency_frequency_id ON frequency (site_id, frequency_id);
+
+DROP INDEX IF EXISTS idx_frequency_range_start CASCADE;
+CREATE INDEX idx_frequency_range_start ON frequency (site_id, range_start);
+
+DROP INDEX IF EXISTS idx_frequency_range_end CASCADE;
+CREATE INDEX idx_frequency_range_end ON frequency (site_id, range_end);
+
+DROP INDEX IF EXISTS idx_frequency_frequency_value CASCADE;
+CREATE INDEX idx_frequency_frequency_value ON frequency (site_id, frequency_value);

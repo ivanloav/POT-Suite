@@ -1,0 +1,8 @@
+{
+  "multiSelect": {
+    "selectedItems": "{{count}} élément sélectionné",
+    "selectedItems_plural": "{{count}} éléments sélectionnés",
+    "hint": "Maintenez Ctrl + clic pour sélectionner plusieurs éléments",
+    "noOptions": "Aucune option disponible"
+  }
+}

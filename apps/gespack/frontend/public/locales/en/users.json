@@ -1,0 +1,105 @@
+{
+  "title": "Users",
+  "breadcrumb": {
+    "list": "Users list",
+    "create": "Create user"
+  },
+
+  "actions": {
+    "addUser": "Create user",
+    "exportStats": "Export statistics",
+    "import": "Import",
+    "refresh": "Refresh",
+    "resetFilters": "Reset filters",
+    "cancel": "Cancel",
+    "save": "Save",
+    "update": "Update",
+    "create": "Create",
+    "edit": "Edit"
+  },
+  
+  "form": {
+    "title": {
+      "create": "Create user",
+      "edit": "Edit user"
+    },
+    "fields": {
+      "name": "Username",
+      "email": "Email address",
+      "password": "Password",
+      "newPassword": "New password (optional)",
+      "newPasswordExtraInfo": "Leave empty to keep current password",
+      "locale": "Language",
+      "selectLanguage": "Select language...",
+      "labelWithoutLang": "Without specific language",
+      "isActive": "Is active",
+      "isActiveTrue": "Active",
+      "isActiveFalse": "Inactive",
+      "sites": "Assigned sites",
+      "sitesCharge": "Loading sites...",
+      "sitesExtraInfo": "Hold Ctrl + click to select multiple",
+      "permissions": "Additional permissions:",
+      "isAdmin": "Administrator access",
+      "isCustomer": "Customer access",
+      "isCB": "Access to view payment cards",
+      "isList": "Access to view listings",
+      "isDailyOrdersReport": "Automatic daily orders report sending"
+    },
+    "placeholders": {
+      "selectLanguage": "Select language...",
+      "passwordHelp": "Leave empty to keep current password"
+    },
+    "messages": {
+      "success": {
+        "create": "User created successfully",
+        "update": "User updated successfully"
+      },
+      "error": {
+        "create": "Error creating user",
+        "update": "Error updating user"
+      },
+      "loading": {
+        "create": "Creating user...",
+        "update": "Updating user...",
+        "loadingData": "Loading user data..."
+      }
+    }
+  },
+
+  "filters": {
+    "idPlaceHolder": "ID",
+    "userNamePlaceHolder": "Name",
+    "emailPlaceHolder": "Email address",
+    "any": "All",
+    "totalSitePlaceHolder": "Sites",
+    "createdRangePlaceHolder": "Date range"
+  },
+
+  "columns": {
+    "id": "ID",
+    "email": "Email address",
+    "userName": "Name",
+    "isAdmin": "Admin",
+    "isActive": "Active",
+    "createdAt": "Created",
+    "sendDailyOrdersReport": "Daily rep.",
+    "isCB": "CB",
+    "isList": "Listings",
+    "totalSite": "Sites",
+    "isCustomer": "Customer"
+  },
+
+  "loading": "Loading users…",
+  "empty": "No users",
+  "any": "All",
+  "yes": "Yes",
+  "no": "No",
+
+  "pagination": {
+    "first": "First",
+    "prev": "Previous",
+    "next": "Next",
+    "last": "Last",
+    "pageXofY": "{{page}} of {{pages}}"
+  }
+}

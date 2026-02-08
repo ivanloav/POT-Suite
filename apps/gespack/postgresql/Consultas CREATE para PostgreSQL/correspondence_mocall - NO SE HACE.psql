@@ -1,0 +1,66 @@
+CREATE TABLE correspondence_mocall (
+    mocall_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+
+    sale_reference TEXT NOT NULL,         -- REF_VENTA
+    sale_description TEXT,                -- DESC_VENTA
+
+    ref1 TEXT,
+    cat1 TEXT,
+    desc1 TEXT,
+    price1 NUMERIC(10,2),
+
+    ref2 TEXT,
+    cat2 TEXT,
+    desc2 TEXT,
+    price2 NUMERIC(10,2),
+
+    ref3 TEXT,
+    cat3 TEXT,
+    desc3 TEXT,
+    price3 NUMERIC(10,2),
+
+    ref4 TEXT,
+    cat4 TEXT,
+    desc4 TEXT,
+    price4 NUMERIC(10,2),
+
+    ref5 TEXT,
+    cat5 TEXT,
+    desc5 TEXT,
+    price5 NUMERIC(10,2),
+
+    ref6 TEXT,
+    cat6 TEXT,
+    desc6 TEXT,
+    price6 NUMERIC(10,2),
+
+    ref7 TEXT,
+    cat7 TEXT,
+    desc7 TEXT,
+    price7 NUMERIC(10,2),
+
+    ref8 TEXT,
+    cat8 TEXT,
+    desc8 TEXT,
+    price8 NUMERIC(10,2),
+
+    ref9 TEXT,
+    cat9 TEXT,
+    desc9 TEXT,
+    price9 NUMERIC(10,2),
+
+    ref10 TEXT,
+    cat10 TEXT,
+    desc10 TEXT,
+    price10 NUMERIC(10,2),
+
+    total NUMERIC(10,2),
+    promo_price NUMERIC(10,2),
+    discount NUMERIC(10,2),
+
+    UNIQUE (site_id, sale_reference)
+
+    FOREIGN KEY (site_id, sale_reference) REFERENCES products(site_id, product_ref) ON DELETE RESTRICT
+);
+CREATE INDEX idx_correspondence_mocall_site_ref ON correspondence_mocall (site_id, sale_reference);

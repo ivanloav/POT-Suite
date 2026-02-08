@@ -1,0 +1,46 @@
+-- =========================================================
+-- Table: customer_types
+-- ---------------------------------------------------------
+-- Guarda la tipología de cliente por sitio.
+-- Ejemplos: 1=Retail, 2=Wholesale, 3=VIP...
+-- Unicidad por (site_id, type_code) y por (site_id, type_name).
+-- =========================================================
+
+DROP TABLE IF EXISTS customer_types CASCADE;
+
+CREATE TABLE customer_types (
+  customer_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id          BIGINT NOT NULL,                             -- Multitenant
+  type_code        INTEGER NOT NULL,                            -- Código numérico de tipo
+  type_name        TEXT    NOT NULL,                            -- Nombre del tipo
+  description      TEXT,                                        -- Descripción opcional
+  is_active        BOOLEAN NOT NULL DEFAULT TRUE,               -- Activo/inactivo
+
+  created_by       BIGINT,                                      -- Auditoría (opcional)
+  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_by      BIGINT,
+  updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  -- Reglas de negocio / calidad de datos
+  CONSTRAINT chk_customer_types_type_code_pos CHECK (type_code > 0),
+  CONSTRAINT chk_customer_types_type_name_not_blank CHECK (btrim(type_name) <> ''),
+
+  -- Multitenant FK
+  CONSTRAINT fk_customer_types_site
+    FOREIGN KEY (site_id)
+    REFERENCES sites (site_id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+
+  -- Unicidad por sitio (código y nombre – case-insensitive para nombre)
+  CONSTRAINT uq_customer_types_site_code UNIQUE (site_id, type_code)
+);
+
+-- Índice para búsquedas case-insensitive por nombre dentro de sitio
+CREATE UNIQUE INDEX uq_customer_types_site_name_ci
+  ON customer_types (site_id, lower(type_name));
+
+-- Índices de apoyo
+CREATE INDEX idx_customer_types_site_id      ON customer_types (site_id);
+CREATE INDEX idx_customer_types_is_active    ON customer_types (site_id, is_active);
+CREATE INDEX idx_customer_types_updated_at  ON customer_types (site_id, updated_at);

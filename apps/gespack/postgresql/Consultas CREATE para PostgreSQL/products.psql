@@ -1,0 +1,37 @@
+CREATE TABLE products (
+    product_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,     -- Identificador único del producto
+    site_id BIGINT NOT NULL,                                        -- Identificador del sitio (clave primaria compuesta)
+    product_ref TEXT NOT NULL,                                        -- REFERENCIA: Referencia del producto
+    catalog TEXT,                                                   -- CATALOGO: Código del catálogo
+    brand_id BIGINT NOT NULL,                                      -- MARCA: Identificador de la marca
+    action TEXT,                                                    -- ACCION: Acción asociada
+    description TEXT,                                               -- DESCRIPCION: Descripción del producto
+    weight NUMERIC(10, 3),                                          -- PESO: Peso del producto
+    vat NUMERIC(10, 3),                                             -- IVA: Impuesto aplicado
+    picking_location TEXT,                                          -- UBICACION_PICKING: Ubicación de picking
+    storage_location TEXT,                                          -- UBICACION_ALMACEN: Ubicación en almacén
+    packaging SMALLINT,                                             -- EMBALAJE: Tipo de embalaje
+    price NUMERIC(19, 4),                                           -- PRECIO: Precio del producto
+    units_per_pack INT,                                             -- UNIDADES_PACK: Unidades por pack
+    stock INT,                                                      -- STOCK: Cantidad en stock
+    cost NUMERIC(19, 4),                                            -- COSTE: Coste del producto
+    additional_info TEXT,                                           -- INF_ADICIONAL: Información adicional
+    vat_type SMALLINT,                                              -- TIPO_IVA: Tipo de IVA
+    status TEXT,                                                    -- ESTADO: Estado del producto
+    blocked_stock SMALLINT,                                         -- STOCKBLOQUEADO: Cantidad de stock bloqueado
+    is_shipped_by_supplier BOOLEAN NOT NULL DEFAULT FALSE,          -- PESADO: Producto pesado, valor predeterminado falso
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,                        -- ACTIVO: Indica si el producto está activo, valor predeterminado verdadero
+    created_by TEXT,                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                 -- FECHA_CREACION
+    modified_by TEXT,                                               -- MODIFICADOR
+        updated_by TEXT,                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, product_ref),                               -- Clave primaria compuesta por site_id y product_id
+    UNIQUE (site_id, product_id),                                                -- Clave primaria compuesta por site_id y product_id
+
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE RESTRICT -- Clave foránea a brands
+);
+
+DROP INDEX IF EXISTS idx_products_site_product_ref CASCADE;
+    CREATE INDEX idx_products_site_product_ref ON products (site_id, product_ref);

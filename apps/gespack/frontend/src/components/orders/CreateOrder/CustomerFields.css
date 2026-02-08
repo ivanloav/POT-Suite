@@ -1,0 +1,50 @@
+/* --- ESTILOS MIGRADOS DESDE CreateOrderForm.css --- */
+.info-warning-customer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #ff5252 0%, #fa7171 70%, #fadada 100%);
+  color: #222;
+  font-size: var(--text-4xl);
+  border-radius: 6px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+.grid-customer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+  grid-template-rows: auto auto auto;
+}
+.grid-customer .address {
+  grid-column: 1 / 2;
+  grid-row: 1 / span 3;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.address-view {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #111827;
+  font-size: var(--text-md);
+  line-height: 1.25;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  overflow: auto;
+  flex: 1;
+  min-height: 80px;
+}
+.address-text {
+  display: block;
+  white-space: pre-wrap;
+}
+.address-text::first-line {
+  font-size: var(--text-xl);
+  font-weight: bold;
+}
+.address-placeholder {
+  color: #9ca3af;
+}

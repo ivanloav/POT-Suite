@@ -1,0 +1,211 @@
+/* Modal overlay */
+.base-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.base-modal-overlay.closing {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+.base-modal-overlay.closing .base-modal-content {
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Modal content */
+.base-modal-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-height: 90%;
+  max-width: 85%; /* 👈 CAMBIAR de 60% a 85% para dar más espacio */
+  width: 100%;
+  margin: 0 auto;
+  background: var(--bg-white);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-100%);
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Modal header */
+.base-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--border-color);
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+.base-modal-header h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+}
+
+.base-modal-close {
+  background: none;
+  border: none;
+  font-size: var(--text-2xl);
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.base-modal-close:hover {
+  color: var(--text-color);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.base-modal-close:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* Modal body */
+.base-modal-body {
+  padding: var(--space-xl);
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Modal actions */
+.base-modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-color);
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.base-modal-actions .btn {
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  font-size: var(--text-md);
+  min-width: 120px;
+  height: var(--input-height-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.base-modal-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.base-modal-actions .btn:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.base-modal-actions .btn-primary {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: #059669;
+}
+
+.base-modal-actions .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(90deg, #059669 0%, #047857 100%);
+  border-color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.base-modal-actions .btn-secondary {
+  background: #f3f4f6;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.base-modal-actions .btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations */
+@keyframes slideDown {
+  to { transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  to { transform: translateY(-100%); }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .base-modal-content {
+    max-width: 95%; /* Más ancho en pantallas medianas */
+  }
+}
+
+@media (max-width: 768px) {
+  .base-modal-content {
+    max-height: 90%;
+    left: var(--space-sm); /* 👈 Margen izquierdo */
+    right: var(--space-sm); /* 👈 Margen derecho */
+    width: auto; /* 👈 AÑADIR: Auto para usar left/right */
+    margin: 0; /* 👈 AÑADIR: Remover margin auto */
+    border-radius: var(--radius-lg);
+  }
+  
+  .base-modal-header {
+    padding: var(--space-lg);
+  }
+  
+  .base-modal-header h2 {
+    font-size: var(--text-xl);
+  }
+  
+  .base-modal-body {
+    padding: var(--space-lg);
+  }
+  
+  .base-modal-actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+  }
+  
+  .base-modal-actions .btn {
+    width: 100%;
+    font-size: var(--text-sm);
+  }
+}

@@ -1,0 +1,44 @@
+CREATE TABLE order_addresses (
+    address_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id BIGINT NOT NULL,                      -- Clave foránea para la relación con Orders
+    site_id INT NOT NULL,                       -- Clave foránea para la relación con Sites
+    order_reference TEXT NOT NULL,                -- REF_PEDIDO (Referencia al pedido)
+    -- Dirección de facturación    
+    billing_customer_name TEXT,           
+    billing_address_line1 TEXT,           
+    billing_address_line2 TEXT,           
+    billing_address_line3 TEXT,           
+    billing_address_line4 TEXT,           
+    billing_address_line5 TEXT,           
+    billing_postal_code TEXT,                 -- CP
+    billing_city TEXT,                        -- POBLACION
+    billing_mobile_phone TEXT,                       -- TEL
+
+    -- Dirección de envío
+    shipping_customer_name TEXT,          
+    shipping_address_line1 TEXT,          
+    shipping_address_line2 TEXT,          
+    shipping_address_line3 TEXT,          
+    shipping_address_line4 TEXT,          
+    shipping_address_line5 TEXT,          
+    shipping_postal_code TEXT,                 -- CP
+    shipping_city TEXT,                        -- POBLACION
+    shipping_mobile_phone TEXT,                       -- TEL
+
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, order_id),                                                     -- Clave única para evitar duplicados por pedido y sitio
+    UNIQUE (site_id, order_reference),                                              -- Evitar duplicados por referencia de pedido
+    
+    -- Relación con la tabla Orders
+    FOREIGN KEY (site_id, order_id) REFERENCES Orders(site_id, order_id) ON DELETE CASCADE
+);
+
+DROP INDEX IF EXISTS idx_order_addresses_order_id CASCADE;
+CREATE INDEX idx_order_addresses_order_id ON order_addresses (site_id, order_id);
+
+DROP INDEX IF EXISTS idx_order_addresses_order_reference CASCADE;
+CREATE INDEX idx_order_addresses_order_reference ON order_addresses (site_id, order_reference);

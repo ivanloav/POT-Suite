@@ -1,0 +1,49 @@
+.site-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.site-dropdown {
+  flex: 1;
+  border: none;
+  padding: 0 10px !important;
+  font-size: var(--text-sidebar-lg) !important;
+  min-height: 0 !important;
+  height: 2rem !important;
+  line-height: 1.75rem !important;
+  font-family: inherit;
+  border-radius: 5px;
+  background-color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.site-dropdown:focus {
+  outline: none;
+}
+
+.site-dropdown option {
+  color: black;
+  background-color: white;
+}
+
+.clear-site-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.clear-site-icon {
+  color: red;
+  font-size: var(--text-clear-site-dropdown-lg);
+  margin-top: 5px;
+}
+
+@media (max-height: 1080px) {
+  .site-dropdown {
+    height: 1.7rem !important;
+    line-height: 1.5rem !important;
+  }
+}

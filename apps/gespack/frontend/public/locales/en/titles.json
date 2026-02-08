@@ -1,0 +1,7 @@
+{ 
+    "dashboard": "Dashboard", 
+    "order": "Orders",
+    "orderList": "Orders list",
+    "orderEntry": "Order entry",
+    "userManagement": "User management"
+}

@@ -1,0 +1,4 @@
+{
+  "kpis_success": "KPIs obtenidos correctamente",
+  "error_kpis": "Error al obtener las estadísticas del dashboard"
+}

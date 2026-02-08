@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16
+    container_name: pot_suite_db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: Ivan
+      POSTGRES_PASSWORD: Mbp@Parcel2308
+      POSTGRES_DB: pot_suite
+    volumes:
+      - pot-suite-db:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+  db-init:
+    image: postgres:16
+    depends_on:
+      - db
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        for f in /db-init/*.sql; do
+          echo "Running $$f";
+          PGPASSWORD="Mbp@Parcel2308" psql -h db -U Ivan -d pot_suite -v ON_ERROR_STOP=1 -f "$$f";
+        done
+    volumes:
+      - ./db/init:/db-init:ro
+
+volumes:
+  pot-suite-db:

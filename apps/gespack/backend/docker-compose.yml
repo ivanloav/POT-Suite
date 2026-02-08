@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: gespack_backend
+    restart: always
+    ports:
+      - "3001:5000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

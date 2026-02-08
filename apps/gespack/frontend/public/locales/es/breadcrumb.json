@@ -1,0 +1,34 @@
+{
+  "login": "Login",
+  "home": "Home",
+  "dashboard": "Panel de control",
+  "customerDetail": "Cliente {{id}}",
+  "users": {
+    "label": "Usuarios",
+    "list": "Lista de usuarios",
+    "usersList": "Lista de usuarios"
+  },
+  "orders": {
+    "label": "Pedidos",
+    "list": "Lista de pedidos",
+    "new": "Nuevo pedido"
+  },
+  "billing": {
+    "label": "Facturación",
+    "list": "Lista de facturación"
+  },
+  "customers": {
+    "label": "Clientes",
+    "list": "Lista de clientes"
+  },
+  "actions": {
+    "label": "Acciones",
+    "list": "Lista de acciones"
+  },
+  "products": {
+    "label": "Productos",
+    "list": "Lista de productos"
+  },
+  
+  "settings": "Configuración"
+}

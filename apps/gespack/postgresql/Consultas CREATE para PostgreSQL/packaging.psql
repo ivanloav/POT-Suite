@@ -1,0 +1,12 @@
+CREATE TABLE packaging (
+    packaging_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    packaging_type TEXT NOT NULL UNIQUE,        -- Tipo de embalaje único
+    packaging_name TEXT,
+    weight NUMERIC(10,2),
+    dimension TEXT,
+    
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

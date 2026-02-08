@@ -1,0 +1,27 @@
+CREATE TABLE packaging_sites (
+    packaging_site_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    packaging_id BIGINT NOT NULL,
+
+    assigned_by TEXT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    unassigned_by TEXT,
+    unassigned_at TIMESTAMP,
+    
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,  -- Estado del enlace (activo = asignado)
+
+    UNIQUE (site_id, packaging_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE CASCADE,
+    FOREIGN KEY (packaging_id) REFERENCES packaging(packaging_id) ON DELETE CASCADE
+);
+
+-- Índice para búsquedas rápidas por cliente y estado
+CREATE INDEX idx_packaging_sites_site_active ON packaging_sites (site_id, is_active);
+
+-- Índice para encontrar todos los embalajes asignados o desasignados
+CREATE INDEX idx_packaging_sites_active ON packaging_sites (is_active);
+
+-- Índice para buscar embalajes por ID (en consultas de packaging general)
+CREATE INDEX idx_packaging_sites_packaging_id ON packaging_sites (packaging_id);

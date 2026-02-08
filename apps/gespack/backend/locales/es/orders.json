@@ -1,0 +1,11 @@
+{
+  "list_success": "Pedidos obtenidos correctamente",
+  "create_success": "Pedido creado correctamente",
+  "update_success": "Pedido actualizado correctamente",
+  "delete_success": "Pedido eliminado correctamente",
+  "not_found": "Pedido no encontrado",
+  "error_list": "Error al obtener los pedidos",
+  "error_create": "Error al crear el pedido",
+  "error_update": "Error al actualizar el pedido",
+  "error_delete": "Error al eliminar el pedido"
+}

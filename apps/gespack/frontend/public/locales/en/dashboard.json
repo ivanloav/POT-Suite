@@ -1,0 +1,30 @@
+{
+    "title": "Dashboard",
+    "sections": {
+      "general": "General",
+      "admin": "Administration"
+    },
+
+    "badges": {
+      "hot": "Hot",
+      "beta": "Beta",
+      "wip": "Work in progress"
+    },
+
+    "card": {
+      "orders": {
+        "pendingInvoicing": "Orders pending invoicing",
+        "recorded": "Recorded orders",
+        "pendingPayment": "Orders pending payment",
+        "invoiced": "Invoiced orders"
+      },
+      "products": {
+        "pendingInvoicing": "Products pending invoicing",
+        "outOfStock": "Out of stock products"
+      },
+      "footer": {
+        "orders": "ORDERS LIST",
+        "products": "PRODUCT DETAILS"
+      }
+    }
+}

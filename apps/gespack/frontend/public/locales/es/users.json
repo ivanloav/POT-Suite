@@ -1,0 +1,105 @@
+{
+  "title": "Usuarios",
+  "breadcrumb": {
+    "list": "Lista de usuarios",
+    "create": "Crear usuario"
+  },
+
+  "actions": {
+    "addUser": "Crear usuario",
+    "exportStats": "Exportar estadísticas",
+    "import": "Importar",
+    "refresh": "Actualizar",
+    "resetFilters": "Restablecer filtros",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "update": "Actualizar",
+    "create": "Crear",
+    "edit": "Editar"
+  },
+  
+  "form": {
+    "title": {
+      "create": "Crear usuario",
+      "edit": "Editar usuario"
+    },
+    "fields": {
+      "name": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "newPassword": "Nueva contraseña (opcional)",
+      "newPasswordExtraInfo": "Dejar vacío para mantener la contraseña actual",
+      "locale": "Idioma",
+      "selectLanguage": "Selecciona idioma...",
+      "labelWithoutLang": "Sin idioma específico",
+      "isActive": "Está activo",
+      "isActiveTrue": "Activo",
+      "isActiveFalse": "Inactivo",
+      "sites": "Sitios asignados",
+      "sitesCharge": "Cargando sitios...",
+      "sitesExtraInfo": "Mantén Ctrl + clic para seleccionar múltiples",
+      "permissions": "Permisos adicionales:",
+      "isAdmin": "Acceso administrador",
+      "isCustomer": "Acceso cliente",
+      "isCB": "Acceso a ver tarjetas de pago",
+      "isList": "Acceso a ver listados",
+      "isDailyOrdersReport": "Envío automático de informe diario de pedidos"
+    },
+    "placeholders": {
+      "selectLanguage": "Selecciona idioma...",
+      "passwordHelp": "Dejar vacío para mantener la contraseña actual"
+    },
+    "messages": {
+      "success": {
+        "create": "Usuario creado correctamente",
+        "update": "Usuario actualizado correctamente"
+      },
+      "error": {
+        "create": "Error al crear el usuario",
+        "update": "Error al actualizar el usuario"
+      },
+      "loading": {
+        "create": "Creando usuario...",
+        "update": "Actualizando usuario...",
+        "loadingData": "Cargando datos del usuario..."
+      }
+    }
+  },
+
+  "filters": {
+    "idPlaceHolder": "ID",
+    "userNamePlaceHolder": "Nombre",
+    "emailPlaceHolder": "Correo electrónico",
+    "any": "Todo",
+    "totalSitePlaceHolder": "Sitios",
+    "createdRangePlaceHolder": "Rango de fechas"
+  },
+
+  "columns": {
+    "id": "ID",
+    "email": "Correo electrónico",
+    "userName": "Nombre",
+    "isAdmin": "Admin",
+    "isActive": "Activo",
+    "createdAt": "Creado",
+    "sendDailyOrdersReport": "Inf. diario",
+    "isCB": "CB",
+    "isList": "Listados",
+    "totalSite": "Sitios",
+    "isCustomer": "Cliente"
+  },
+
+  "loading": "Cargando usuarios…",
+  "empty": "No hay usuarios",
+  "any": "Todo",
+  "yes": "Sí",
+  "no": "No",
+
+  "pagination": {
+    "first": "Primera",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "last": "Última",
+    "pageXofY": "{{page}} de {{pages}}"
+  }
+}

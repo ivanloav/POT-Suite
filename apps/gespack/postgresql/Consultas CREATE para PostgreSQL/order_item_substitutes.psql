@@ -1,0 +1,25 @@
+CREATE TABLE order_item_substitutes (
+    substitute_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,      -- PK técnica
+    site_id BIGINT NOT NULL,                                            -- ID del sitio asociado al pedido
+    order_item_id BIGINT NOT NULL,                                      -- Clave foránea a order_items
+    substitute_product_ref TEXT,                                        -- ID_REF_SUST (Referencia del producto sustitutivo)
+    substitute_catalog_ref TEXT,                                        -- REF_SUST (Referencia en el catálogo del sustitutivo)
+    substitute_catalog_code TEXT,                                       -- CATALOGO_SUST (Código del catálogo del sustitutivo)
+    substitute_quantity INT,                                            -- CANT_SUST (Cantidad sustitutiva)
+    substitute_description TEXT,                                        -- DESC_SUST (Descripción del artículo sustitutivo)
+    substitute_import NUMERIC(19, 4),                                   -- IMP_SUST (Importe del artículo sustitutivo)
+    created_by TEXT,                                                    -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                     -- FECHA_CREACION
+    updated_by TEXT,                                                   -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                    -- FECHA_MODIFICACION
+
+    -- Clave única para evitar duplicados
+    UNIQUE (site_id, order_item_id, substitute_product_ref),
+
+    -- Clave foránea compuesta hacia order_items
+    FOREIGN KEY (site_id, order_item_id) REFERENCES order_items(site_id, order_item_id) ON DELETE CASCADE
+);
+
+-- Índices opcionales para búsquedas frecuentes
+CREATE INDEX idx_order_item_substitutes_order_item_id ON order_item_substitutes (order_item_id);
+CREATE INDEX idx_order_item_substitutes_substitute_product_ref ON order_item_substitutes (substitute_product_ref);

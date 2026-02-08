@@ -1,0 +1,27 @@
+CREATE TABLE product_substitutes (
+  substitute_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,           -- ID autoincremental por sitio
+  site_id BIGINT NOT NULL,                                                  -- Site ID (multi-tenant support)
+  ref_start TEXT,                                                           -- REF_INICIO
+  cat_start TEXT,                                                           -- CAT_INICIO
+  desc_start TEXT,                                                          -- DESC_INICIO
+  ref_end TEXT,                                                             -- REF_FIN
+  cat_end TEXT,                                                             -- CAT_FIN
+  desc_end TEXT,                                                            -- DESC_FIN
+  max_quantity INT,                                                         -- CANT_MAX
+  used_quantity INT,                                                        -- CANT_USED
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                           -- DATE_CREATION
+  expires_at TIMESTAMP,                                                     -- DATE_MAX
+  created_by TEXT,                                                          -- CREATED_BY
+  updated_at TIMESTAMP,                                                    -- DATE_MODIF
+  updated_by TEXT,                                                         -- MODIF_BY
+  is_active BOOLEAN DEFAULT FALSE,                                          -- ACTIVE
+
+  UNIQUE (site_id, substitute_id),
+  UNIQUE (site_id, ref_start, ref_end)
+  
+);
+
+DROP INDEX IF EXISTS idx_product_substitutes_site_ref_start CASCADE;
+CREATE INDEX idx_product_substitutes_site_ref_start ON product_substitutes (site_id, ref_start);
+DROP INDEX IF EXISTS idx_product_substitutes_site_ref_end CASCADE;
+  CREATE INDEX idx_product_substitutes_site_ref_end   ON product_substitutes (site_id, ref_end);

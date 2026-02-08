@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS product_unavailable_log CASCADE;
+
+CREATE TABLE product_unavailable_log (
+    unavailable_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_reference TEXT,         -- PEDIDO
+    reference TEXT,               -- REFERENCIA
+    order_line INT,               -- LINEA_PEDIDO
+    quantity INT,                 -- CANT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by TEXT,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_product_unavailable_log_site_order ON product_unavailable_log (site_id, order_reference);
+CREATE INDEX idx_product_unavailable_log_site_reference ON product_unavailable_log (site_id, reference);

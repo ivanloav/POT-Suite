@@ -1,0 +1,192 @@
+.OrdersList-content {
+  flex: 1;
+  text-align: center;
+  color: #ffffff;
+  background-color: #18448a;
+  margin-top: -2.1875rem; /* -35px convertido a rem */
+}
+
+.order-status-badge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-xl);
+  color: #fff;
+  font-weight: 600;
+  font-size: var(--text-md) !important; /* Usar variable consistente */
+  min-width: 4.375rem; /* 70px */
+  text-align: center;
+}
+
+/* Estados de pedido - mantener los gradientes */
+.status-cancelled {
+  background: linear-gradient(90deg, #d32f2f 0%, #ff6e7f 100%);
+}
+.status-pending {
+  background: linear-gradient(90deg, #fbbf24 0%, #f5e558 100%);
+}
+.status-reserved {
+  background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+}
+.status-paid {
+  background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+}
+.status-invoiced {
+  background: linear-gradient(90deg, #8e24aa 0%, #ce93d8 100%);
+}
+.status-shipped {
+  background: linear-gradient(90deg, #388e3c 0%, #81c784 100%);
+}
+.status-returned {
+  background: linear-gradient(90deg, #d32f2f 0%, #ff6e7f 100%);
+}
+
+/* Estilos base para inputs y selects usando variables - MÁS COMPACTOS */
+.filter-input, 
+.status-filter-select,
+select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  
+  background-color: var(--bg-white) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: var(--space-xs) var(--space-sm) !important;
+  font-size: var(--text-sm) !important; /* Consistente con tabla */
+  font-family: inherit !important;
+  line-height: 1.2 !important;
+  min-height: var(--input-height-sm) !important;
+  height: var(--input-height-sm) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Placeholders específicos para filtros */
+.filter-input::placeholder,
+.status-filter-select::placeholder {
+  font-size: var(--text-sm) !important; /* Mismo tamaño que el contenido */
+  color: #9ca3af !important;
+  font-family: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Para selects específicamente - añadir flecha */
+select.filter-input,
+select.status-filter-select,
+select {
+  padding-right: var(--space-xl) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right var(--space-sm) center !important;
+  background-repeat: no-repeat !important;
+  background-size: var(--space-md) !important;
+}
+
+/* Para inputs específicamente (sin flecha) */
+input.filter-input,
+input.status-filter-select {
+  background-image: none !important;
+  padding-right: var(--space-sm) !important;
+}
+
+/* Focus states usando variables */
+.filter-input:focus,
+.status-filter-select:focus,
+select:focus {
+  outline: 1px solid var(--focus-color) !important;
+  outline-offset: 1px !important;
+  border-color: var(--focus-color) !important;
+}
+
+@media (max-height: 1080px) {
+  .order-status-badge {
+    font-size: var(--text-sm) !important; /* Usar variable consistente */
+  }
+}
+/* Media queries usando las mismas variables */
+@media (max-width: 768px) {
+  .filter-input,
+  .status-filter-select,
+  select {
+    font-size: var(--text-sm) !important; /* Mantener consistente */
+    min-height: var(--input-height-md) !important;
+    height: var(--input-height-md) !important;
+    padding: var(--space-sm) var(--space-md) !important;
+  }
+  
+  /* Placeholders en móvil */
+  .filter-input::placeholder,
+  .status-filter-select::placeholder {
+    font-size: var(--text-sm) !important; /* Consistente */
+  }
+  
+  select.filter-input,
+  select.status-filter-select,
+  select {
+    padding-right: var(--space-xl) !important;
+    background-position: right var(--space-sm) center !important;
+    background-size: var(--space-lg) !important;
+  }
+  
+  input.filter-input,
+  input.status-filter-select {
+    padding-right: var(--space-md) !important;
+  }
+
+  /* Badges más pequeños en móvil */
+  .order-status-badge {
+    padding: var(--space-xs) var(--space-sm) !important;
+    font-size: var(--text-xs) !important;
+    min-width: 3.75rem !important;
+  }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .filter-input,
+  .status-filter-select,
+  select {
+    min-height: 1.75rem !important;
+    height: 1.75rem !important;
+    padding: var(--space-xs) var(--space-sm) !important;
+    font-size: var(--text-sm) !important; /* Mantener consistente */
+  }
+  
+  /* Placeholders en pantallas pequeñas */
+  .filter-input::placeholder,
+  .status-filter-select::placeholder {
+    font-size: var(--text-sm) !important;
+  }
+  
+  select.filter-input,
+  select.status-filter-select,
+  select {
+    padding-right: var(--space-lg) !important;
+    background-position: right var(--space-xs) center !important;
+    background-size: var(--space-sm) !important;
+  }
+
+  .order-status-badge {
+    padding: 2px var(--space-xs) !important;
+    font-size: 0.6875rem !important;
+    min-width: 3.125rem !important;
+  }
+}
+
+/* Options con variables */
+select option {
+  background-color: var(--bg-white) !important;
+  color: var(--text-color) !important;
+  padding: var(--space-xs) !important;
+  font-size: var(--text-sm) !important; /* Consistente */
+  font-family: inherit !important;
+}
+
+@media (max-width: 768px) {
+  select option {
+    padding: var(--space-sm) !important;
+    font-size: var(--text-sm) !important; /* Mantener consistente */
+  }
+}

@@ -1,0 +1,28 @@
+DROP TABLE IF EXISTS order_payment_schedules CASCADE;
+CREATE TABLE order_payment_schedules (
+    order_payment_schedule_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_payments_id BIGINT NOT NULL,
+    schedule_number INT NOT NULL,            -- Plazo: 1, 2, 3, 4...
+    amount NUMERIC(19,4) NOT NULL,
+    due_date DATE,
+    is_paid BOOLEAN DEFAULT FALSE,
+    paid_date DATE,
+    is_unpaid BOOLEAN DEFAULT FALSE,
+    unpaid_date DATE,
+    is_recovered BOOLEAN DEFAULT FALSE,
+    recovered_date DATE,
+    cheque_number TEXT,
+    bank_name TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, order_payments_id, schedule_number),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_payments_id) REFERENCES order_payments(site_id, order_payments_id) ON DELETE CASCADE
+);
+
+DROP INDEX IF EXISTS idx_order_payment_schedules_site_payment CASCADE;
+CREATE INDEX idx_order_payment_schedules_site_payment ON order_payment_schedules (site_id, order_payments_id);

@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS customer_marked_types CASCADE;
+CREATE TABLE customer_marked_types (
+    marked_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,                                                        -- ID_SITE (ID del sitio)
+    name TEXT NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,                                                   -- ACTIVO
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    updated_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, name),                                                        -- Clave primaria compuesta
+    UNIQUE (site_id, marked_type_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);

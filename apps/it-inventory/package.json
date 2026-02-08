@@ -1,0 +1,15 @@
+{
+  "name": "it-inventory-pot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "docs:start": "cd documentation/website && npm start",
+    "docs:build": "cd documentation/website && npm run build",
+    "docs:serve": "cd documentation/website && npm run serve",
+    "docs:deploy": "cd documentation/website && npm run deploy"
+  },
+  "dependencies": {
+    "react-toastify": "^11.0.5",
+    "xlsx": "^0.18.5"
+  }
+}

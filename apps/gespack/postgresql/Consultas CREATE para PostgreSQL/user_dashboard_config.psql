@@ -1,0 +1,26 @@
+DROP TABLE IF EXISTS user_dashboard_config;
+CREATE TABLE user_dashboard_config (
+  user_dashboard_config_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id INT NOT NULL,
+  site_id INT NOT NULL,
+  card_order JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, site_id),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+  -- 👈 SIN FK a sites para permitir site_id = 0
+);
+
+-- Añadir comentario DESPUÉS de crear la tabla (sintaxis PostgreSQL)
+COMMENT ON COLUMN user_dashboard_config.site_id IS '0 = configuración global para todos los sitios';
+
+-- Índices para optimización
+DROP INDEX IF EXISTS idx_user_dashboard_config_user_id CASCADE;
+DROP INDEX IF EXISTS idx_user_dashboard_config_site_id CASCADE;
+CREATE INDEX idx_user_dashboard_config_user_id ON user_dashboard_config(user_id);
+CREATE INDEX idx_user_dashboard_config_site_id ON user_dashboard_config(site_id);
+
+-- Constraint para valores válidos
+ALTER TABLE user_dashboard_config 
+ADD CONSTRAINT chk_site_id_valid 
+CHECK (site_id >= 0);

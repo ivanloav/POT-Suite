@@ -1,0 +1,24 @@
+DROP TABLE IF EXISTS stock_entries CASCADE;
+CREATE TABLE stock_entries (
+    stock_entry_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,              -- FK a products
+    reference TEXT,                          -- Opcional si quieres duplicar el campo
+    description TEXT,
+    quantity NUMERIC(19,4),                  -- Cantidad, ahora numérico
+    invoice_or_delivery TEXT,                -- ALBARAN_FACTURA
+    supplier TEXT,
+    entry_date DATE,                         -- Fecha de entrada
+    worker TEXT,
+    entry_type TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, product_id) REFERENCES products(site_id, product_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_stock_entries_site_product ON stock_entries (site_id, product_id);
+CREATE INDEX idx_stock_entries_site_supplier ON stock_entries (site_id, supplier);

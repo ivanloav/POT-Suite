@@ -1,0 +1,68 @@
+/* frontend/src/components/users/CreateUserForm.css - LIMPIAR conflictos */
+
+.user-form-modal.base-modal-overlay .base-modal-content {
+  max-width: 30%;
+}
+
+.user-form-modal .base-form input,
+.user-form-modal .base-form select,
+.user-form-modal .base-form textarea {
+  max-width: 100%;
+}
+
+.user-form-modal .base-modal-content .password-field-container .password-requirements {
+  margin: var(--space-md) auto var(--space-md) auto;
+  max-width: 100%;
+  padding: var(--space-lg);
+  padding-right: var(--space-4xl);
+  box-sizing: border-box;
+}
+
+.permissions-group {
+  margin: var(--space-lg) 0;
+  padding: var(--space-lg);
+  background: #f8f9fa;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e9ecef;
+}
+
+.permissions-group h4 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--text-lg);
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.permissions-group .base-checkbox-field {
+  margin-bottom: var(--space-sm);
+}
+
+.permissions-group .base-checkbox-field:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 2000px) {
+  .user-form-modal.base-modal-overlay .base-modal-content {
+    max-width: 60%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .user-form-modal.base-modal-overlay .base-modal-content {
+    max-width: 80%;
+  }
+}
+
+/* 👈 LIMPIAR: Solo ajustar ancho, dejar que BaseModal maneje el posicionamiento */
+@media (max-width: 768px) {
+  .user-form-modal.base-modal-overlay .base-modal-content {
+    max-width: none; /* Remover límite máximo */
+    width: calc(100% - var(--space-xl)); /* Menos margen en pantallas muy pequeñas */
+    left: var(--space-md);  
+  }
+  .user-form-modal .base-form input,
+  .user-form-modal .base-form select,
+  .user-form-modal .base-form textarea {
+    color: black;
+  }
+}

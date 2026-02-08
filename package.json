@@ -1,0 +1,24 @@
+{
+  "name": "pot-suite",
+  "private": true,
+  "scripts": {
+    "gespack:dev": "sh -c 'npm run gespack:frontend:dev & npm run gespack:backend:dev & wait'",
+    "gespack:frontend:dev": "npm --workspace=gespack-frontend run dev",
+    "gespack:frontend:build": "npm --workspace=gespack-frontend run build",
+    "gespack:backend:dev": "npm --workspace=gespack-backend run dev",
+    "gespack:backend:dev:docker": "npm --workspace=gespack-backend run dev:docker",
+    "gespack:backend:start": "npm --workspace=gespack-backend run start",
+    "it:dev": "sh -c 'npm run it:frontend:dev & npm run it:backend:dev & wait'",
+    "it:frontend:dev": "npm --workspace=it-inventory-frontend run dev",
+    "it:frontend:build": "npm --workspace=it-inventory-frontend run build",
+    "it:backend:dev": "npm --workspace=it-inventory-backend run dev",
+    "it:backend:start": "npm --workspace=it-inventory-backend run start"
+  },
+  "workspaces": [
+    "apps/*/frontend",
+    "apps/*/backend",
+    "apps/*/docs",
+    "apps/*/documentation/website",
+    "packages/*"
+  ]
+}

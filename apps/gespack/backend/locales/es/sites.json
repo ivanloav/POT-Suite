@@ -1,0 +1,8 @@
+{
+  "list_success": "Sitios obtenidos correctamente",
+  "assigned_sites": "Sitios asignados al usuario",
+  "selected_site": "Sitio actual seleccionado",
+  "not_found": "Sitio no encontrado",
+  "error_list": "Error al obtener los sitios",
+  "error_assign": "Error al asignar los sitios"
+}

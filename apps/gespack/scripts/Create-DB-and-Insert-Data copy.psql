@@ -1,0 +1,2250 @@
+-- TABLAS QUE NO ESTAN EN ESTE SCRIPT:
+    -- correspondence_mocall
+
+
+
+-- PostgreSQL script to create tables and relationships for a deployment system
+
+ALTER DATABASE "GesPack" SET timezone = 'Europe/Madrid';
+
+DROP TABLE IF EXISTS sites CASCADE;
+CREATE TABLE sites (
+    site_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    site_name TEXT NOT NULL CHECK (site_name ~ '^[A-Z]{1,15}$'),
+    site_description TEXT,
+    contact_info TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_name)
+);
+
+DROP INDEX IF EXISTS idx_sites_site_name CASCADE;
+CREATE INDEX idx_sites_site_name ON sites (site_name);
+
+DROP FUNCTION IF EXISTS update_timestamp() CASCADE;
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_timestamp
+BEFORE UPDATE ON sites
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- =========================================================
+--  LIMPIEZA (en orden para evitar dependencias)
+-- =========================================================
+DROP TRIGGER IF EXISTS trg_users_touch_modified    ON users;
+DROP TRIGGER IF EXISTS trg_users_normalize_email   ON users;
+
+DROP TRIGGER IF EXISTS trg_user_site_after_ins     ON user_site;
+DROP TRIGGER IF EXISTS trg_user_site_after_del     ON user_site;
+DROP TRIGGER IF EXISTS trg_user_site_after_upd     ON user_site;
+
+DROP FUNCTION IF EXISTS fn_users_touch_modified();
+DROP FUNCTION IF EXISTS fn_users_normalize_email();
+DROP FUNCTION IF EXISTS fn_user_site_sync_total(BIGINT);
+
+DROP TABLE IF EXISTS user_site CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE users (
+  user_id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+  -- Site principal del usuario (nullable)
+  site_id       BIGINT NULL REFERENCES sites(site_id)
+                  ON UPDATE CASCADE
+                  ON DELETE SET NULL,
+
+  user_name     TEXT NOT NULL,
+  user_password TEXT NOT NULL,          -- guarda SIEMPRE el hash, nunca texto plano
+  email         TEXT,
+  locale        TEXT NOT NULL DEFAULT 'es',
+
+  is_customer   BOOLEAN NOT NULL DEFAULT FALSE,
+  is_admin      BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE,   -- si no quieres eliminar físicamente
+  is_cb         BOOLEAN NOT NULL DEFAULT FALSE,
+  is_list       BOOLEAN NOT NULL DEFAULT FALSE,
+
+  total_site    BIGINT,                          -- opcional, normalmente se calcula con COUNT en user_sites
+
+  send_daily_orders_report BOOLEAN NOT NULL DEFAULT FALSE,
+
+  created_by    BIGINT REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE SET NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified_by   BIGINT REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE SET NULL,
+  updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  -- Reglas de datos
+  CONSTRAINT chk_user_password_nonempty CHECK (length(user_password) > 0),
+  CONSTRAINT chk_locale_not_empty       CHECK (length(locale) > 0)
+);
+
+-- Únicos/índices recomendados
+ALTER TABLE users ADD CONSTRAINT uq_users_email UNIQUE (email);
+
+CREATE INDEX idx_users_name         ON users (user_name);
+CREATE INDEX idx_users_email        ON users (lower(email));
+CREATE INDEX idx_users_is_admin     ON users (is_admin);
+CREATE INDEX idx_users_is_active    ON users (is_active);
+CREATE INDEX idx_users_created_at   ON users (created_at);
+CREATE INDEX idx_users_site_id      ON users (site_id);
+
+-- Trigger para refrescar updated_at automáticamente
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at := CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_users_set_updated_at ON users;
+CREATE TRIGGER trg_users_set_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+-- =========================================================
+--  TABLA USER_SITE
+-- =========================================================
+DROP TABLE IF EXISTS user_site CASCADE;
+
+CREATE TABLE user_site (
+    user_site_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id      BIGINT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    site_id      BIGINT NOT NULL REFERENCES sites(site_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_user_site UNIQUE (user_id, site_id)  -- evita duplicados
+);
+
+CREATE INDEX idx_user_site_user ON user_site (user_id);
+CREATE INDEX idx_user_site_site ON user_site (site_id);
+
+-- =========================================================
+--  FUNCIONES AUXILIARES
+-- =========================================================
+
+-- 1) Tocar updated_at en updates de users
+CREATE OR REPLACE FUNCTION fn_users_touch_modified()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at := CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2) Normalizar email a minúsculas/trim en users
+CREATE OR REPLACE FUNCTION fn_users_normalize_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.email IS NOT NULL THEN
+    NEW.email := lower(btrim(NEW.email));
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3) Recalcular total_site para un user_id dado
+CREATE OR REPLACE FUNCTION fn_user_site_sync_total(p_user_id BIGINT)
+RETURNS VOID AS $$
+DECLARE
+  v_total BIGINT;
+BEGIN
+  SELECT COUNT(*) INTO v_total
+  FROM user_site
+  WHERE user_id = p_user_id;
+
+  UPDATE users
+     SET total_site = COALESCE(v_total, 0),
+         updated_at = CURRENT_TIMESTAMP
+   WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
+--  TRIGGERS
+-- =========================================================
+
+-- users: tocar updated_at en UPDATE
+DROP TRIGGER IF EXISTS trg_users_touch_modified ON users;
+CREATE TRIGGER trg_users_touch_modified
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION fn_users_touch_modified();
+
+-- users: normalizar email en INSERT/UPDATE
+DROP TRIGGER IF EXISTS trg_users_normalize_email ON users;
+CREATE TRIGGER trg_users_normalize_email
+BEFORE INSERT OR UPDATE OF email ON users
+FOR EACH ROW
+EXECUTE FUNCTION fn_users_normalize_email();
+
+-- user_site: manejar cambios en UPDATE
+CREATE OR REPLACE FUNCTION fn_user_site_after_upd()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    PERFORM fn_user_site_sync_total(OLD.user_id);
+    PERFORM fn_user_site_sync_total(NEW.user_id);
+  ELSE
+    PERFORM fn_user_site_sync_total(NEW.user_id);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- user_site: mantener total_site al INSERT
+DROP TRIGGER IF EXISTS trg_user_site_after_ins ON user_site;
+CREATE TRIGGER trg_user_site_after_ins
+AFTER INSERT ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+-- user_site: mantener total_site al DELETE
+DROP TRIGGER IF EXISTS trg_user_site_after_del ON user_site;
+CREATE TRIGGER trg_user_site_after_del
+AFTER DELETE ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+DROP TRIGGER IF EXISTS trg_user_site_after_upd ON user_site;
+CREATE TRIGGER trg_user_site_after_upd
+AFTER UPDATE ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+-- =========================================================
+--  OPCIONAL: inicializar total_site para datos existentes
+-- =========================================================
+UPDATE users u
+   SET total_site = s.cnt
+  FROM (SELECT user_id, COUNT(*)::BIGINT AS cnt 
+        FROM user_site 
+        GROUP BY user_id) s
+ WHERE u.user_id = s.user_id;
+
+DROP TABLE IF EXISTS brands CASCADE;
+CREATE TABLE brands (
+    brand_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                       -- ID único para cada acción
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    brand_name TEXT NOT NULL,                                                      -- MARCA
+    description TEXT,                                                               -- DESCRIPCION
+    start_date DATE,                                                           -- FECHA_INICIO
+    end_date DATE,                                                             -- FECHA_FIN
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ACTIVO
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, brand_name),                                                -- Clave primaria compuesta
+    UNIQUE (site_id, brand_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+    
+    DROP INDEX IF EXISTS idx_brands_brand_id CASCADE;
+    CREATE INDEX idx_brands_brand_id ON brands (brand_id);                  -- Índice para mejorar las búsquedas
+    DROP INDEX IF EXISTS idx_brands_brand_name CASCADE;
+    CREATE INDEX idx_brands_brand_name ON brands (brand_name);                     -- Índice para mejorar las búsquedas por marca
+
+DROP TABLE IF EXISTS user_dashboard_config;
+CREATE TABLE user_dashboard_config (
+  user_dashboard_config_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id INT NOT NULL,
+  site_id INT NOT NULL,
+  card_order JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, site_id),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+  -- 👈 SIN FK a sites para permitir site_id = 0
+);
+
+-- Añadir comentario DESPUÉS de crear la tabla (sintaxis PostgreSQL)
+COMMENT ON COLUMN user_dashboard_config.site_id IS '0 = configuración global para todos los sitios';
+
+-- Índices para optimización
+DROP INDEX IF EXISTS idx_user_dashboard_config_user_id CASCADE;
+DROP INDEX IF EXISTS idx_user_dashboard_config_site_id CASCADE;
+CREATE INDEX idx_user_dashboard_config_user_id ON user_dashboard_config(user_id);
+CREATE INDEX idx_user_dashboard_config_site_id ON user_dashboard_config(site_id);
+
+-- Constraint para valores válidos
+ALTER TABLE user_dashboard_config 
+ADD CONSTRAINT chk_site_id_valid 
+CHECK (site_id >= 0);
+
+DROP TABLE IF EXISTS action_categories CASCADE;
+CREATE TABLE action_categories (
+    action_category_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,         -- ID único de la categoría
+    site_id BIGINT NOT NULL,                                                    -- ID del sitio al que pertenece la categoría
+    category_name TEXT NOT NULL,                                                -- Nombre de la categoría
+    description TEXT,                                                           -- Descripción de la categoría
+    created_by TEXT,                                                            -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             -- FECHA_CREACION
+    modified_by TEXT,                                                           -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                            -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, category_name),                                            -- Clave única compuesta
+    UNIQUE (site_id, action_category_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+DROP TABLE IF EXISTS action_priority_types CASCADE;
+CREATE TABLE action_priority_types (
+    action_priority_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,     -- ID único del tipo de prioridad
+    site_id BIGINT NOT NULL,                                                -- ID del sitio
+    priority_name TEXT NOT NULL,                                            -- Nombre del tipo de prioridad (e.g., "NORMAL", "EXPRESS")
+    created_by TEXT,                                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                         -- FECHA_CREACION
+    modified_by TEXT,                                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                        -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, priority_name),                                    -- Clave primaria compuesta
+    UNIQUE (site_id, action_priority_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+DROP TABLE IF EXISTS action_category_costs CASCADE;
+CREATE TABLE action_category_costs (
+    category_cost_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- PK técnica
+    site_id BIGINT NOT NULL,                                            -- Cliente
+    category_cost_name TEXT NOT NULL,                                   -- Nombre del coste
+    action_category_id INT NOT NULL,                                    -- Categoría
+    action_priority_id INT NOT NULL,                                    -- Tipo de prioridad
+    shipping_cost NUMERIC(19, 4) NOT NULL,                              -- Coste de envío
+    mandatory_fee NUMERIC(19, 4) DEFAULT 0,                             -- Tarifas adicionales
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, category_cost_name),                               -- Clave de negocio única por cliente
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, action_category_id) REFERENCES action_categories(site_id, action_category_id) ON DELETE CASCADE,
+    FOREIGN KEY (site_id, action_priority_id) REFERENCES action_priority_types(site_id, action_priority_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS actions CASCADE;
+CREATE TABLE actions (
+    action_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                      -- ID único para cada acción
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    action_name TEXT NOT NULL,                                                      -- ACCION
+    description TEXT,                                                               -- DESCRIPCION
+    launch_date TIMESTAMP NOT NULL,                                                 -- FECHA_LANZAMIENTO
+    brand_id BIGINT NOT NULL,                                                                     -- Marca
+    print_run INT,                                                                  -- TIRADA
+    deposit_date TIMESTAMP NOT NULL,                                                -- DATE_DEPOT
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ESTADO
+    catalog_code TEXT,                                                              -- CODE_CATALOGUE
+    catalog_lot TEXT,                                                               -- LOT_CATALOGUE
+    catalog_description TEXT,                                                       -- DESC_CATALOGUE
+    action_category_id INT,  -- Categoría de la acción
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+
+    UNIQUE (site_id, action_name),                                                   -- Clave única compuesta
+    UNIQUE (site_id, action_id),                                                    -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, action_category_id) REFERENCES action_categories(site_id, action_category_id) ON DELETE SET NULL, -- Referencia a categorías
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE SET NULL -- Referencia a brands
+);
+
+DROP INDEX IF EXISTS idx_actions_site_action_name CASCADE;
+    CREATE INDEX idx_actions_site_action_name ON actions (site_id, action_name);
+
+DROP TABLE IF EXISTS customer_marked_types CASCADE;
+CREATE TABLE customer_marked_types (
+    marked_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,                                                        -- ID_SITE (ID del sitio)
+    name TEXT NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,                                                   -- ACTIVO
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, name),                                                        -- Clave primaria compuesta
+    UNIQUE (site_id, marked_type_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+ 
+DROP TABLE IF EXISTS customer_rnvp_types CASCADE;
+ CREATE TABLE customer_rnvp_types (
+    rnvp_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,                                                        -- ID_SITE (ID del sitio)
+    name TEXT NOT NULL,
+    description TEXT,
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, name),                                                        -- Clave primaria compuesta
+    UNIQUE (site_id, rnvp_type_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+DROP TABLE IF EXISTS customer_types CASCADE;
+CREATE TABLE customer_types (
+  customer_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id          BIGINT NOT NULL,                             -- Multitenant
+  type_code        INTEGER NOT NULL,                            -- Código numérico de tipo
+  type_name        TEXT    NOT NULL,                            -- Nombre del tipo
+  description      TEXT,                                        -- Descripción opcional
+  is_active        BOOLEAN NOT NULL DEFAULT TRUE,               -- Activo/inactivo
+
+  created_by       BIGINT,                                      -- Auditoría (opcional)
+  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified_by      BIGINT,
+  updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  -- Reglas de negocio / calidad de datos
+  CONSTRAINT chk_customer_types_type_code_pos CHECK (type_code > 0),
+  CONSTRAINT chk_customer_types_type_name_not_blank CHECK (btrim(type_name) <> ''),
+
+  -- Multitenant FK
+  CONSTRAINT fk_customer_types_site
+    FOREIGN KEY (site_id)
+    REFERENCES sites (site_id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+
+  -- Unicidad por sitio (código y nombre – case-insensitive para nombre)
+  CONSTRAINT uq_customer_types_site_code UNIQUE (site_id, customer_type_id)
+);
+
+-- Índice para búsquedas case-insensitive por nombre dentro de sitio
+CREATE UNIQUE INDEX uq_customer_types_site_name_ci
+  ON customer_types (site_id, lower(type_name));
+
+-- Índices de apoyo
+CREATE INDEX idx_customer_types_site_id      ON customer_types (site_id);
+CREATE INDEX idx_customer_types_is_active    ON customer_types (site_id, is_active);
+CREATE INDEX idx_customer_types_updated_at  ON customer_types (site_id, updated_at);
+
+DROP TABLE IF EXISTS customers CASCADE;
+CREATE TABLE customers (
+    customer_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,        -- NUMERO_DE_CLIENT
+    site_id BIGINT NOT NULL,                                            -- ID_SITE (ID del sitio)
+    customer_code BIGINT NOT NULL,                                      -- NUMERO_DE_CLIENT
+    customer_gender TEXT,                                               -- SEXO (Género)
+    customer_first_name TEXT,                                           -- NOMBRE (Nombre del cliente)
+    customer_last_name TEXT,                                            -- APELLIDO (Apellido del cliente)
+
+    -- Dirección de facturación     
+    billing_gender TEXT,                                                -- SEXO (Género)
+    billing_first_name TEXT,                                            -- NOM (Primer nombre)
+    billing_last_name TEXT,                                             -- APE (Apellido)
+    billing_address_line1 TEXT,                                         -- DIR1 (Dirección línea 1)
+    billing_address_line2 TEXT,                                         -- DIR2 (Dirección línea 2)
+    billing_address_line3 TEXT,                                         -- DIR3 (Dirección línea 3)
+    billing_address_line4 TEXT,                                         -- DIR4 (Dirección línea 4)
+    billing_address_cp TEXT,                                            -- CP (Dirección línea 5)
+    billing_address_city TEXT,                                          -- POBLACION (Dirección línea 5)
+    billing_address_country TEXT,                                       -- PAIS (Dirección línea 5)
+    billing_mobile_phone TEXT,                                          -- PORTABLE (Teléfono móvil)
+    -- Dirección de envío                               
+    shipping_gender TEXT,                                               -- SEXO (Género)
+    shipping_first_name TEXT,                                           -- NOM (Primer nombre)
+    shipping_last_name TEXT,                                            -- APE (Apellido)
+    shipping_address_line1 TEXT,                                        -- DIR1 (Dirección línea 1)
+    shipping_address_line2 TEXT,                                        -- DIR2 (Dirección línea 2)
+    shipping_address_line3 TEXT,                                        -- DIR3 (Dirección línea 3)
+    shipping_address_line4 TEXT,                                        -- DIR4 (Dirección línea 4)
+    shipping_address_cp TEXT,                                           -- CP (Dirección línea 5)
+    shipping_address_city TEXT,                                         -- POBLACION (Dirección línea 5)
+    shipping_address_country TEXT,                                      -- PAIS (Dirección línea 5)
+    shipping_mobile_phone TEXT,                                         -- PORTABLE (Teléfono móvil)
+
+    phone TEXT,                                                         -- TEL (Teléfono)
+    customer_type_id BIGINT,                                            -- TIPO_DE_CLIENTE (Tipo de cliente, FK a customer_types)
+    birth_date DATE,                                                    -- FECHA_NACIMIENTO (Fecha de nacimiento)
+    npai TEXT,                                                          -- P1 (NPAI)
+    rfm TEXT,                                                           -- Q1 (RFM)
+    -- credit_risk TEXT,                                                   -- R1 (MOROSOS Y MALPAGADORES)
+    -- source_origin TEXT,                                                 -- S1 (Campo adicional S1)
+    -- is_under_guardianship BOOLEAN NOT NULL DEFAULT FALSE,               -- TUTELADO (Tutelado, booleano con valor predeterminado FALSE)
+    -- is_deceased BOOLEAN NOT NULL DEFAULT FALSE,                         -- DECEDE (Fallecido, booleano con valor predeterminado FALSE)
+    -- do_not_contact BOOLEAN NOT NULL DEFAULT FALSE,                      -- ROBINSON (Robinson, booleano con valor predeterminado FALSE)
+    rnvp_type_id INT,                                                   -- RNVP (Tipo de RNVP)
+    -- marked_id INT,                                                      -- MARCADO (Tipo de marcado)
+    -- insert TEXT,                                                     -- ENCARTE (Inserto)
+    email TEXT,                                                         -- EMAIL (Correo electrónico)
+    privileged BOOLEAN NOT NULL DEFAULT FALSE,                          -- PRIVILEGIE (Privilegiado, booleano con valor predeterminado FALSE)
+    privileged_date DATE,                                               -- DATE_PRIVILEGIE (Fecha de privilegio)
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,                          -- ACTIVO (Activo, booleano con valor predeterminado FALSE)
+    created_by TEXT,                                                    -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                     -- FECHA_CREACION
+    modified_by TEXT,                                                   -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                    -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, customer_code),
+    UNIQUE (site_id, customer_id),                                     -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, rnvp_type_id) REFERENCES customer_rnvp_types (site_id, rnvp_type_id),
+    -- FOREIGN KEY (site_id, marked_type_id) REFERENCES customer_marked_types (site_id, marked_type_id),
+    FOREIGN KEY (site_id, customer_type_id) REFERENCES customer_types (site_id, customer_type_id)
+);
+
+    CREATE INDEX idx_customers_code ON customers (site_id, customer_code);
+    CREATE INDEX idx_customers_last_name ON customers (customer_last_name);
+
+DROP TABLE IF EXISTS customer_marked;
+CREATE TABLE customer_marked (
+  marked_id      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  marked_type_id BIGINT NOT NULL,
+  customer_id    BIGINT NOT NULL,
+  site_id        BIGINT NOT NULL,
+  source_marked  TEXT,
+  name           TEXT NOT NULL,
+  description    TEXT,
+  created_by     TEXT,
+  is_active      BOOLEAN DEFAULT TRUE,
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  modified_by    TEXT,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id, marked_type_id) REFERENCES customer_marked_types(site_id, marked_type_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Unicidad por sitio y nombre de marcado
+CREATE UNIQUE INDEX uq_customer_marked_site_name ON customer_marked (site_id, name);
+
+-- Índices para consultas rápidas
+CREATE INDEX idx_customer_marked_site_id ON customer_marked (site_id);
+CREATE INDEX idx_customer_marked_updated_at ON customer_marked (site_id, updated_at);
+CREATE INDEX idx_customer_marked_customer_id ON customer_marked (customer_id);
+CREATE INDEX idx_customer_marked_marked_type_id ON customer_marked (marked_type_id);
+
+DROP TABLE IF EXISTS correspondence CASCADE;
+CREATE TABLE correspondence (
+    correspondence_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    site_id BIGINT NOT NULL,                                           -- Cliente
+    customer_id BIGINT NOT NULL,                                         -- ID del cliente
+    customer_code BIGINT,                                                -- NUM_CLIENTE
+    order_reference TEXT,                                              -- PEDIDO
+    sent_date DATE NOT NULL,                                           -- FECHA
+    letter_type TEXT,                                                  -- TIPO_CARTA
+
+    UNIQUE (site_id, correspondence_id),                             -- Clave primaria compuesta
+    UNIQUE (site_id, customer_id),                                   -- Evitar duplicados por ID cliente
+    UNIQUE (site_id, customer_code),                                 -- Evitar duplicados por cliente
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT
+);
+
+-- Si necesitas evitar duplicados por cliente y fecha:
+CREATE UNIQUE INDEX idx_correspondence_site_date ON correspondence (site_id, customer_code, sent_date);
+
+-- Índices para mejorar las búsquedas
+DROP INDEX IF EXISTS idx_correspondence_customer_id CASCADE;
+CREATE INDEX idx_correspondence_customer_id ON correspondence (site_id, customer_id);
+
+DROP INDEX IF EXISTS idx_correspondence_customer_code CASCADE;
+CREATE INDEX idx_correspondence_customer_code ON correspondence (site_id, customer_code);
+
+DROP INDEX IF EXISTS idx_correspondence_order_reference CASCADE;
+CREATE INDEX idx_correspondence_order_reference ON correspondence (site_id, order_reference);
+
+DROP TABLE IF EXISTS product_substitutes CASCADE;
+CREATE TABLE product_substitutes (
+  substitute_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,           -- ID autoincremental por sitio
+  site_id BIGINT NOT NULL,                                                  -- Site ID (multi-tenant support)
+  ref_start TEXT,                                                           -- REF_INICIO
+  cat_start TEXT,                                                           -- CAT_INICIO
+  desc_start TEXT,                                                          -- DESC_INICIO
+  ref_end TEXT,                                                             -- REF_FIN
+  cat_end TEXT,                                                             -- CAT_FIN
+  desc_end TEXT,                                                            -- DESC_FIN
+  max_quantity INT,                                                         -- CANT_MAX
+  used_quantity INT,                                                        -- CANT_USED
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                           -- DATE_CREATION
+  expires_at TIMESTAMP,                                                     -- DATE_MAX
+  created_by TEXT,                                                          -- CREATED_BY
+  updated_at TIMESTAMP,                                                    -- DATE_MODIF
+  modified_by TEXT,                                                         -- MODIF_BY
+  is_active BOOLEAN DEFAULT FALSE,                                          -- ACTIVE
+
+  UNIQUE (site_id, substitute_id),
+  UNIQUE (site_id, ref_start, ref_end),
+
+  FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_product_substitutes_site_ref_start CASCADE;
+CREATE INDEX idx_product_substitutes_site_ref_start ON product_substitutes (site_id, ref_start);
+DROP INDEX IF EXISTS idx_product_substitutes_site_ref_end CASCADE;
+  CREATE INDEX idx_product_substitutes_site_ref_end   ON product_substitutes (site_id, ref_end);
+
+DROP TABLE IF EXISTS product_substitutes_log CASCADE;
+CREATE TABLE product_substitutes_log (
+    log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,                                      -- ID del sitio
+    substitute_id BIGINT NOT NULL,                               -- ID autoincremental  
+    order_id TEXT,                                         -- PEDIDO
+    is_bundle BOOLEAN,                                            -- IS_BUNDLE
+    bundle_id TEXT,                                        -- ID_BUNDLE
+    sku_bundle TEXT,                                       -- SKU_BUNDLE
+    sku_wms TEXT,                                          -- SKU_WMS
+    quantity INT,                                                 -- QTY
+    order_line TEXT,                                       -- LINEA_PEDIDO
+    description TEXT,                                             -- DESCRIPCION
+    price NUMERIC(10,2),                                          -- PRECIO
+    total NUMERIC(10,2),                                          -- IMP
+    sku_wms_substitute TEXT,                               -- SKU_WMS_SUST
+    quantity_substitute INT,                                      -- QTY_SUST
+    description_substitute TEXT,                                  -- DESC_SUST
+    price_substitute NUMERIC(10,2),                               -- PRECIO_SUST
+    total_substitute NUMERIC(10,2),                               -- IMP_SUST
+    apology_phrase TEXT,                                          -- FRASE_DISCULPA 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,               -- DATE_CREATION
+    created_by TEXT,                                              -- CREATED_BY 
+    UNIQUE (site_id, substitute_id),                                    -- 🔐 Clave primaria compuesta
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, substitute_id) REFERENCES product_substitutes(site_id, substitute_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_product_substitutes_log_site_id CASCADE;
+CREATE INDEX idx_product_substitutes_log_site_id ON product_substitutes_log (site_id, substitute_id);
+
+DROP TABLE IF EXISTS products CASCADE;
+CREATE TABLE products (
+    product_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,     -- Identificador único del producto
+    site_id BIGINT NOT NULL,                                        -- Identificador del sitio (clave primaria compuesta)
+    product_ref TEXT NOT NULL,                                        -- REFERENCIA: Referencia del producto
+    catalog TEXT,                                                   -- CATALOGO: Código del catálogo
+    brand_id BIGINT NOT NULL,                                      -- MARCA: Identificador de la marca
+    action TEXT,                                                    -- ACCION: Acción asociada
+    description TEXT,                                               -- DESCRIPCION: Descripción del producto
+    weight NUMERIC(10, 3),                                          -- PESO: Peso del producto
+    vat NUMERIC(10, 3),                                             -- IVA: Impuesto aplicado
+    picking_location TEXT,                                          -- UBICACION_PICKING: Ubicación de picking
+    storage_location TEXT,                                          -- UBICACION_ALMACEN: Ubicación en almacén
+    packaging SMALLINT,                                             -- EMBALAJE: Tipo de embalaje
+    price NUMERIC(19, 4),                                           -- PRECIO: Precio del producto
+    units_per_pack INT,                                             -- UNIDADES_PACK: Unidades por pack
+    stock INT,                                                      -- STOCK: Cantidad en stock
+    cost NUMERIC(19, 4),                                            -- COSTE: Coste del producto
+    additional_info TEXT,                                           -- INF_ADICIONAL: Información adicional
+    vat_type SMALLINT,                                              -- TIPO_IVA: Tipo de IVA
+    status TEXT,                                                    -- ESTADO: Estado del producto
+    blocked_stock SMALLINT,                                         -- STOCKBLOQUEADO: Cantidad de stock bloqueado
+    is_shipped_by_supplier BOOLEAN NOT NULL DEFAULT FALSE,          -- PESADO: Producto pesado, valor predeterminado falso
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,                        -- ACTIVO: Indica si el producto está activo, valor predeterminado verdadero
+    created_by TEXT,                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                 -- FECHA_CREACION
+    modified_by TEXT,                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, product_ref),                               -- Clave primaria compuesta por site_id y product_id
+    UNIQUE (site_id, product_id),                                                -- Clave primaria compuesta por site_id y product_id
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE RESTRICT -- Clave foránea a brands
+);
+
+DROP INDEX IF EXISTS idx_products_site_product_ref CASCADE;
+    CREATE INDEX idx_products_site_product_ref ON products (site_id, product_ref);
+
+DROP TABLE IF EXISTS product_bundles CASCADE;
+CREATE TABLE product_bundles (
+    bundle_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                 -- ID único para cada item del bundle
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece el bundle
+    bundle_id INT,                                                                  -- ID_BUNDLE (Identificador del bundle)
+    product_id BIGINT NOT NULL,                                                     -- ID del producto (clave foránea a products)
+    sku_bundle TEXT,                                                                -- SKU_BUNDLE
+    sku_wms TEXT,                                                                   -- SKU_WMS
+    qty INT,                                                                        -- QTY (Cantidad)
+    date_creation TIMESTAMP,                                                        -- DATE_CREATION (Fecha de creación)
+    created_by TEXT,                                                                -- CREATED_BY (Creado por)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIF_BY (Modificado por)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+    is_active BOOLEAN DEFAULT FALSE,                                                -- IS_ACTIVE (Activo)
+    
+    UNIQUE (site_id, bundle_id),                                          -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, product_id) REFERENCES products(site_id, product_id) ON DELETE RESTRICT     -- Clave foránea a products
+);
+
+DROP INDEX IF EXISTS idx_bundles_sku_bundle CASCADE;
+CREATE INDEX idx_bundles_sku_bundle ON product_bundles (sku_bundle);                        -- Índice para mejorar las búsquedas
+DROP INDEX IF EXISTS idx_bundles_sku_wms CASCADE;
+CREATE INDEX idx_bundles_sku_wms ON product_bundles (sku_wms);                              -- Índice para mejorar las búsquedas
+
+DROP TABLE IF EXISTS order_payments_card_types CASCADE;
+CREATE TABLE order_payments_card_types (
+    card_type_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    card_type_name TEXT NOT NULL UNIQUE,                                    -- Nombre del tipo de tarjeta, como 'VISA', 'MasterCard', etc.
+    created_by TEXT,                                                        -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                         -- FECHA_CREACION
+    modified_by TEXT,                                                       -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                        -- FECHA_MODIFICACION
+);
+
+DROP INDEX IF EXISTS idx_order_payments_card_types_name CASCADE;
+CREATE INDEX idx_order_payments_card_types_name ON order_payments_card_types (card_type_name);
+
+DROP TABLE IF EXISTS order_payments CASCADE;
+
+CREATE TABLE order_payments (
+    order_payments_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+
+    payment_type TEXT NOT NULL,           -- efectivo, tarjeta, cheque, aplazado, etc.
+    is_deferred BOOLEAN DEFAULT FALSE,    -- ¿Pago aplazado?
+    schedule_count INT NOT NULL DEFAULT 1 CHECK (schedule_count >= 1 AND schedule_count <= 4),
+    holder_name TEXT,
+    amount NUMERIC(19,4) NOT NULL,        -- Importe del pago total (suma de plazos si aplazado)
+
+    -- Campos para cheque
+    bank_name TEXT,
+    cheque_number TEXT,
+
+    -- Campos para tarjeta
+    card_type_id INT,
+    card_number BIGINT,
+    expiration_date VARCHAR(5),
+    security_code INT,
+
+    -- Estado del pago
+    is_unpaid BOOLEAN DEFAULT FALSE,
+    unpaid_amount NUMERIC(19,4),
+    unpaid_date DATE,
+    is_recovered BOOLEAN DEFAULT FALSE,
+    recovered_amount NUMERIC(19,4),
+    recovery_date DATE,
+    is_uncollectible BOOLEAN DEFAULT FALSE,
+    uncollectible_amount NUMERIC(19,4),
+    uncollectible_date DATE,
+
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, order_payments_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    -- FOREIGN KEY (site_id, order_id) REFERENCES orders(site_id, order_id) ON DELETE RESTRICT,
+    FOREIGN KEY (card_type_id) REFERENCES order_payments_card_types(card_type_id) ON DELETE CASCADE
+);
+
+DROP INDEX IF EXISTS idx_order_payments_order_id CASCADE;
+CREATE INDEX idx_order_payments_order_id ON order_payments (site_id, order_id);
+
+DROP INDEX IF EXISTS idx_order_payments_payment_type CASCADE;
+CREATE INDEX idx_order_payments_payment_type ON order_payments (site_id, payment_type);
+
+DROP INDEX IF EXISTS idx_order_payments_deferred CASCADE;
+CREATE INDEX idx_order_payments_deferred ON order_payments (site_id, is_deferred);
+
+DROP TABLE IF EXISTS order_payment_schedules CASCADE;
+CREATE TABLE order_payment_schedules (
+    order_payment_schedule_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_payments_id BIGINT NOT NULL,
+    schedule_number INT NOT NULL,            -- Plazo: 1, 2, 3, 4...
+    amount NUMERIC(19,4) NOT NULL,
+    due_date DATE,
+    is_paid BOOLEAN DEFAULT FALSE,
+    paid_date DATE,
+    is_unpaid BOOLEAN DEFAULT FALSE,
+    unpaid_date DATE,
+    is_recovered BOOLEAN DEFAULT FALSE,
+    recovered_date DATE,
+    cheque_number TEXT,
+    bank_name TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, order_payments_id, schedule_number),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_payments_id) REFERENCES order_payments(site_id, order_payments_id) ON DELETE CASCADE
+);
+
+DROP INDEX IF EXISTS idx_order_payment_schedules_site_payment CASCADE;
+CREATE INDEX idx_order_payment_schedules_site_payment ON order_payment_schedules (site_id, order_payments_id);
+
+DROP TABLE IF EXISTS order_sources CASCADE;
+
+CREATE TABLE order_sources (
+  order_source_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id         BIGINT NOT NULL,                               -- Multitenant
+  source_name     TEXT  NOT NULL,                                -- Nombre del origen (único por sitio)
+  description     TEXT,                                          -- Opcional
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+
+  created_by      BIGINT,                                        -- Auditoría (opcional)
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified_by     BIGINT,
+  updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT chk_order_sources_source_name_not_blank CHECK (btrim(source_name) <> ''),
+
+  -- Multitenant FK
+  CONSTRAINT fk_order_sources_site
+    FOREIGN KEY (site_id)
+    REFERENCES sites (site_id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+
+  CONSTRAINT uq_order_sources_site_order_source UNIQUE(site_id, order_source_id)
+);
+
+-- Unicidad por sitio (nombre – case-insensitive)
+CREATE UNIQUE INDEX uq_order_sources_site_name_ci
+  ON order_sources (site_id, lower(source_name));
+
+-- Índices de apoyo
+CREATE INDEX idx_order_sources_site_id      ON order_sources (site_id);
+CREATE INDEX idx_order_sources_is_active    ON order_sources (site_id, is_active);
+CREATE INDEX idx_order_sources_updated_at  ON order_sources (site_id, updated_at);
+
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TYPE IF EXISTS order_status CASCADE;
+
+-- Tipo ENUM de estado (como tenías)
+CREATE TYPE order_status AS ENUM (
+  'pending', 'paid', 'reserved', 'shipped', 'invoiced', 'returned', 'cancelled'
+);
+
+CREATE TABLE orders (
+  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id BIGINT NOT NULL,
+  order_datetime TIMESTAMP,
+  order_reference TEXT NOT NULL,
+  brand_id BIGINT NOT NULL,
+  order_source_id BIGINT,
+  action_id BIGINT,
+  action_category_id INT NOT NULL,
+  action_priority_id INT,
+  shipping_cost NUMERIC(19,4),
+  mandatory_shipping_fee NUMERIC(19,4),
+  customer_id BIGINT,
+  gender TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  payment_type_id BIGINT NOT NULL,
+  is_paid BOOLEAN DEFAULT FALSE,
+  paid_at DATE DEFAULT NULL,
+  is_invoiced BOOLEAN DEFAULT FALSE,
+  invoiced_at DATE DEFAULT NULL,
+  order_lines BIGINT DEFAULT 0,
+  weight FLOAT DEFAULT 0,
+  client_type NUMERIC(18,0),
+  participant TEXT,
+  order_amount NUMERIC(19,4),
+  bi1 NUMERIC(19,4),
+  bi2 NUMERIC(19,4),
+  tva1 NUMERIC(19,4),
+  tva2 NUMERIC(19,4),
+  return_status TEXT,
+  shipping_type TEXT,
+  value_em NUMERIC(18,0),
+  is_callcenter BOOLEAN DEFAULT FALSE,
+  is_stock_reserved BOOLEAN DEFAULT FALSE,
+  last_letter TEXT,
+  is_upselling BOOLEAN DEFAULT FALSE,
+  is_upselling_purchase BOOLEAN DEFAULT FALSE,
+  upselling_amount NUMERIC(19,4),
+  upselling_offer TEXT,
+  is_deferred BOOLEAN DEFAULT FALSE,
+  transport TEXT,
+  discount NUMERIC(19,4),
+  is_privileged BOOLEAN DEFAULT FALSE,
+  club_card_fee NUMERIC(19,4),
+  club_card_discount NUMERIC(19,4),
+  is_shipped_by_supplier BOOLEAN DEFAULT FALSE,
+  is_partially_shipped_by_supplier BOOLEAN DEFAULT FALSE,
+  is_supplier BOOLEAN DEFAULT FALSE,
+  is_substitute BOOLEAN DEFAULT FALSE,
+  is_no_article BOOLEAN DEFAULT FALSE,
+  no_article_amount NUMERIC(19,4),
+  is_bav BOOLEAN DEFAULT FALSE,
+  bav_amount NUMERIC(19,4),
+  bav_order TEXT,
+  amount_due NUMERIC(19,4),
+  next_available_number TEXT,
+  is_generated_bav BOOLEAN DEFAULT FALSE,
+  generated_bav_amount NUMERIC(19,4),
+
+  status order_status NOT NULL DEFAULT 'pending',
+
+  -- Auditoría consistente en TODAS las tablas
+  created_by BIGINT,                                 -- FK → users.user_id
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  modified_by BIGINT,                                -- FK → users.user_id
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Anulación (nuevos nombres)
+  is_annulled BOOLEAN DEFAULT FALSE,
+  annulled_by BIGINT,                                -- FK → users.user_id
+  annulled_at DATE,                                  -- antes: annulled_date
+
+  UNIQUE (site_id, order_reference),
+  UNIQUE (site_id, order_id),
+
+  -- FKs existentes
+  FOREIGN KEY (site_id, action_id)         REFERENCES actions(site_id, action_id)                 ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, customer_id)       REFERENCES customers(site_id, customer_id)             ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, action_priority_id)REFERENCES action_priority_types(site_id, action_priority_id) ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, action_category_id)REFERENCES action_categories(site_id, action_category_id)     ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, payment_type_id)   REFERENCES order_payments(site_id, order_payments_id)  ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, brand_id)          REFERENCES brands(site_id, brand_id)                   ON DELETE RESTRICT,
+  FOREIGN KEY (site_id, order_source_id)   REFERENCES order_sources(site_id, order_source_id)    ON DELETE RESTRICT,
+
+  -- 🔒 Bloquear borrado de usuarios con histórico
+  CONSTRAINT fk_orders_created_by  FOREIGN KEY (created_by)  REFERENCES users(user_id) ON DELETE RESTRICT,
+  CONSTRAINT fk_orders_modified_by FOREIGN KEY (modified_by) REFERENCES users(user_id) ON DELETE RESTRICT,
+  CONSTRAINT fk_orders_annulled_by FOREIGN KEY (annulled_by) REFERENCES users(user_id) ON DELETE RESTRICT
+);
+
+-- Índices (como tenías + algunos útiles)
+DROP INDEX IF EXISTS idx_orders_order_id;
+CREATE INDEX idx_orders_order_id          ON orders (order_id);
+
+DROP INDEX IF EXISTS idx_orders_customer_id;
+CREATE INDEX idx_orders_customer_id       ON orders (customer_id);
+
+DROP INDEX IF EXISTS idx_orders_order_reference;
+CREATE INDEX idx_orders_order_reference   ON orders (site_id, order_reference);
+
+DROP INDEX IF EXISTS idx_orders_site_status;
+CREATE INDEX idx_orders_site_status       ON orders (site_id, status);
+
+-- Opcionales útiles
+CREATE INDEX IF NOT EXISTS idx_orders_created_by   ON orders (created_by);
+CREATE INDEX IF NOT EXISTS idx_orders_modified_by  ON orders (modified_by);
+CREATE INDEX IF NOT EXISTS idx_orders_annulled_by  ON orders (annulled_by);
+
+DROP TABLE IF EXISTS order_addresses CASCADE;
+CREATE TABLE order_addresses (
+    address_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id BIGINT NOT NULL,                      -- Clave foránea para la relación con Orders
+    site_id INT NOT NULL,                       -- Clave foránea para la relación con Sites
+    order_reference TEXT NOT NULL,                -- REF_PEDIDO (Referencia al pedido)
+    -- Dirección de facturación    
+    billing_customer_name TEXT,           
+    billing_address_line1 TEXT,           
+    billing_address_line2 TEXT,           
+    billing_address_line3 TEXT,           
+    billing_address_line4 TEXT,           
+    billing_address_line5 TEXT,           
+    billing_postal_code TEXT,                 -- CP
+    billing_city TEXT,                        -- POBLACION
+    billing_mobile_phone TEXT,                       -- TEL
+
+    -- Dirección de envío
+    shipping_customer_name TEXT,          
+    shipping_address_line1 TEXT,          
+    shipping_address_line2 TEXT,          
+    shipping_address_line3 TEXT,          
+    shipping_address_line4 TEXT,          
+    shipping_address_line5 TEXT,          
+    shipping_postal_code TEXT,                 -- CP
+    shipping_city TEXT,                        -- POBLACION
+    shipping_mobile_phone TEXT,                       -- TEL
+
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, order_id),                                                     -- Clave única para evitar duplicados por pedido y sitio
+    UNIQUE (site_id, order_reference),                                              -- Evitar duplicados por referencia de pedido
+
+    -- Relación con la tabla Orders
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_id) REFERENCES Orders(site_id, order_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_order_addresses_order_id CASCADE;
+CREATE INDEX idx_order_addresses_order_id ON order_addresses (site_id, order_id);
+
+DROP INDEX IF EXISTS idx_order_addresses_order_reference CASCADE;
+CREATE INDEX idx_order_addresses_order_reference ON order_addresses (site_id, order_reference);
+
+DROP TABLE IF EXISTS order_notes CASCADE;
+CREATE TABLE order_notes (
+    note_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+    order_reference TEXT NOT NULL,
+    note_text TEXT NOT NULL,
+    is_internal BOOLEAN NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, note_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_id) REFERENCES orders(site_id, order_id) ON DELETE RESTRICT
+);
+DROP INDEX IF EXISTS idx_order_notes_order_id CASCADE;
+CREATE INDEX idx_order_notes_order_id ON order_notes (order_id);
+
+-- =========================================
+-- order_items con product_id + relaciones
+-- =========================================
+DROP TABLE IF EXISTS order_items CASCADE;
+
+CREATE TABLE order_items (
+    order_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- Identificador único de la línea
+    site_id       BIGINT NOT NULL,                                 -- Sede
+    order_id      BIGINT NOT NULL,                                 -- Pedido
+    line_number   INT,                                             -- Nº de línea dentro del pedido
+
+    -- NUEVO: relación directa al catálogo
+    product_id    BIGINT,                                          -- FK a products (recomendado NOT NULL cuando termines la migración)
+    product_ref   TEXT,                                            -- Referencia legado/informativa
+
+    catalog_ref   TEXT,                                            -- REF_ART
+    catalog_code  TEXT,                                            -- CATALOGO
+    quantity      INT,                                             -- Cantidad
+    product_description TEXT,                                      -- Descripción
+    unit_price    NUMERIC(19, 4),                                  -- Precio unitario
+    line_total    NUMERIC(19, 4),                                  -- Importe total de la línea
+
+    is_abonado           TEXT,                                     -- Estado abonado (si aplica)
+    stock_reserved       BOOLEAN DEFAULT FALSE,                    -- Reserva de stock
+    is_substitute        BOOLEAN DEFAULT FALSE,                    -- Sustitutivo
+    is_unavailable       BOOLEAN DEFAULT FALSE,                    -- Sin artículo
+    apology_phrase       TEXT,                                     -- Frase de disculpa
+    is_supplier_shipped  BOOLEAN DEFAULT FALSE,                    -- Envío de proveedor
+
+    created_by  TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Clave única de negocio (una línea única por pedido)
+    UNIQUE (site_id, order_id, line_number),
+    UNIQUE (site_id, order_item_id),
+
+    -- FKs
+    FOREIGN KEY (site_id)                REFERENCES sites(site_id)                     ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_id)      REFERENCES orders(site_id, order_id)         ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, product_id)    REFERENCES products(site_id, product_id)     ON DELETE RESTRICT
+);
+
+-- =========================
+-- Índices recomendados
+-- =========================
+-- Búsquedas por pedido
+DROP INDEX IF EXISTS idx_order_items_site_order;
+CREATE INDEX idx_order_items_site_order ON order_items (site_id, order_id);
+
+-- Joins rápidos a producto por product_id
+DROP INDEX IF EXISTS idx_order_items_site_product_id;
+CREATE INDEX idx_order_items_site_product_id ON order_items (site_id, product_id);
+
+-- (Opcional, útil durante transición/migración si aún usas product_ref)
+DROP INDEX IF EXISTS idx_order_items_site_product_ref;
+CREATE INDEX idx_order_items_site_product_ref ON order_items (site_id, product_ref);
+
+-- (Opcional) Si filtras mucho por flags, valora índices parciales:
+CREATE INDEX idx_order_items_stock_reserved ON order_items (site_id, order_id) WHERE stock_reserved = TRUE;
+CREATE INDEX idx_order_items_is_unavailable ON order_items (site_id, order_id) WHERE is_unavailable = TRUE;
+
+DROP TABLE IF EXISTS order_item_substitutes CASCADE;
+CREATE TABLE order_item_substitutes (
+    substitute_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,      -- PK técnica
+    site_id BIGINT NOT NULL,                                            -- ID del sitio asociado al pedido
+    order_item_id BIGINT NOT NULL,                                      -- Clave foránea a order_items
+    substitute_product_ref TEXT,                                        -- ID_REF_SUST (Referencia del producto sustitutivo)
+    substitute_catalog_ref TEXT,                                        -- REF_SUST (Referencia en el catálogo del sustitutivo)
+    substitute_catalog_code TEXT,                                       -- CATALOGO_SUST (Código del catálogo del sustitutivo)
+    substitute_quantity INT,                                            -- CANT_SUST (Cantidad sustitutiva)
+    substitute_description TEXT,                                        -- DESC_SUST (Descripción del artículo sustitutivo)
+    substitute_import NUMERIC(19, 4),                                   -- IMP_SUST (Importe del artículo sustitutivo)
+    created_by TEXT,                                                    -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                     -- FECHA_CREACION
+    modified_by TEXT,                                                   -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                    -- FECHA_MODIFICACION
+
+    -- Clave única para evitar duplicados
+    UNIQUE (site_id, order_item_id, substitute_product_ref),
+
+    -- Clave foránea compuesta hacia order_items
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_item_id) REFERENCES order_items(site_id, order_item_id) ON DELETE RESTRICT
+);
+
+-- Índices opcionales para búsquedas frecuentes
+DROP INDEX IF EXISTS idx_order_item_substitutes_order_item_id CASCADE;
+CREATE INDEX idx_order_item_substitutes_order_item_id ON order_item_substitutes (order_item_id);
+DROP INDEX IF EXISTS idx_order_item_substitutes_substitute_product_ref CASCADE;
+CREATE INDEX idx_order_item_substitutes_substitute_product_ref ON order_item_substitutes (substitute_product_ref);
+
+DROP TABLE IF EXISTS packaging CASCADE;
+CREATE TABLE packaging (
+    packaging_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    packaging_type TEXT NOT NULL UNIQUE,        -- Tipo de embalaje único
+    packaging_name TEXT,
+    weight NUMERIC(10,2),
+    dimension TEXT,
+    
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS packaging_sites CASCADE;
+CREATE TABLE packaging_sites (
+    packaging_site_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    packaging_id BIGINT NOT NULL,
+
+    assigned_by TEXT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    unassigned_by TEXT,
+    unassigned_at TIMESTAMP,
+    
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,  -- Estado del enlace (activo = asignado)
+
+    UNIQUE (site_id, packaging_id),
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (packaging_id) REFERENCES packaging(packaging_id) ON DELETE RESTRICT
+);
+
+-- Índice para búsquedas rápidas por cliente y estado
+DROP INDEX IF EXISTS idx_packaging_sites_site_active CASCADE;
+CREATE INDEX idx_packaging_sites_site_active ON packaging_sites (site_id, is_active);
+
+-- Índice para encontrar todos los embalajes asignados o desasignados
+DROP INDEX IF EXISTS idx_packaging_sites_active CASCADE;
+CREATE INDEX idx_packaging_sites_active ON packaging_sites (is_active);
+
+-- Índice para buscar embalajes por ID (en consultas de packaging general)
+DROP INDEX IF EXISTS idx_packaging_sites_packaging_id CASCADE;
+CREATE INDEX idx_packaging_sites_packaging_id ON packaging_sites (packaging_id);
+
+DROP TABLE IF EXISTS returns CASCADE;
+CREATE TABLE returns (
+    return_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    site_id BIGINT NOT NULL,                                   -- Cliente
+    order_reference TEXT NOT NULL,                           -- Pedido asociado
+    return_date DATE,                                          -- Fecha de devolución
+    action TEXT,                                               -- Acción realizada
+    customer_code BIGINT NOT NULL,                             -- Número de cliente
+    marked TEXT,                                               -- Marcado
+
+    created_by TEXT,                                           -- Auditoría
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Clave foránea: prohibido eliminar cliente si tiene devoluciones
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, order_reference) REFERENCES orders(site_id, order_reference) ON DELETE RESTRICT
+);
+
+    -- Índice para búsquedas rápidas por cliente
+DROP INDEX IF EXISTS idx_returns_site_customer_code CASCADE;
+    CREATE INDEX idx_returns_site_customer_code ON returns (site_id, customer_code);
+
+    -- Índice para búsquedas rápidas por pedido
+DROP INDEX IF EXISTS idx_returns_site_order_reference CASCADE;
+    CREATE INDEX idx_returns_site_order_reference ON returns (site_id, order_reference);
+
+DROP TABLE IF EXISTS return_items CASCADE;
+CREATE TABLE return_items (
+    return_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    return_id BIGINT NOT NULL,                                       -- Clave foránea a returns
+    product_ref TEXT NOT NULL,                                      -- Referencia del producto
+    quantity INT NOT NULL,                                          -- Cantidad devuelta
+    reason TEXT,                                                    -- Motivo de la devolución
+    created_by TEXT,                                               -- Auditoría
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (return_id) REFERENCES returns(return_id) ON DELETE CASCADE -- Clave foránea a returns
+);
+
+DROP INDEX IF EXISTS idx_return_items_return_id CASCADE;
+    CREATE INDEX idx_return_items_return_id ON return_items (return_id);
+DROP INDEX IF EXISTS idx_return_items_product_ref CASCADE;
+    CREATE INDEX idx_return_items_product_ref ON return_items (product_ref);
+
+DROP TABLE IF EXISTS invoicing CASCADE;
+CREATE TABLE invoicing (
+    invoice_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    invoicing_date TIMESTAMP,
+    brand TEXT,
+    invoice_number TEXT NOT NULL,
+    customer_code BIGINT,
+    first_name TEXT,
+    last_name TEXT,
+    order_reference TEXT,
+    priority_cost NUMERIC(19,4),
+    transport_cost NUMERIC(19,4),
+    total_transport NUMERIC(19,4),
+    colissimo NUMERIC(19,4),
+    bi1 NUMERIC(19,4),
+    tva1 NUMERIC(19,4),
+    bi2 NUMERIC(19,4),
+    tva2 NUMERIC(19,4),
+    total NUMERIC(19,4),
+    status TEXT,
+
+    is_unpaid BOOLEAN DEFAULT FALSE,
+    unpaid_amount TEXT,
+    unpaid_date TEXT,
+
+    is_recovered BOOLEAN DEFAULT FALSE,
+    recovered_amount TEXT,
+    recovered_date TEXT,
+
+    is_uncollectible BOOLEAN DEFAULT FALSE,
+    uncollectible_amount TEXT,
+    uncollectible_date TEXT,
+
+    is_commission_paid BOOLEAN DEFAULT FALSE,
+    mocall_invoice TEXT,
+    commission TEXT,
+    worker TEXT,
+    invoice_date TIMESTAMP,
+
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, invoice_number),
+    UNIQUE (site_id, invoice_id), -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_invoicing_invoice_id CASCADE;
+CREATE INDEX idx_invoicing_invoice_id on invoicing (site_id, invoice_id);
+
+DROP INDEX IF EXISTS idx_invoicing_customer_code CASCADE;
+CREATE INDEX idx_invoicing_customer_code on invoicing (site_id, customer_code);
+
+DROP INDEX IF EXISTS idx_invoicing_invoice_number CASCADE;
+CREATE INDEX idx_invoicing_invoice_number on invoicing (site_id, invoice_number);
+
+DROP TABLE IF EXISTS invoicing_refunds CASCADE;
+CREATE TABLE invoicing_refunds (
+    refund_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    invoice_id BIGINT NOT NULL,
+    refund_date TIMESTAMP,
+    invoice_date TIMESTAMP,
+    brand TEXT,
+    refund_invoice_number TEXT NOT NULL,
+    customer_code BIGINT,
+    first_name TEXT,
+    last_name TEXT,
+    order_reference TEXT,
+    priority_cost NUMERIC(19,4),
+    transport_cost NUMERIC(19,4),
+    total_transport NUMERIC(19,4),
+    colissimo NUMERIC(19,4),
+    bi1 NUMERIC(19,4),
+    tva1 NUMERIC(19,4),
+    bi2 NUMERIC(19,4),
+    tva2 NUMERIC(19,4),
+    total NUMERIC(19,4),
+    status TEXT,
+    worker TEXT,
+    related_invoice TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, refund_invoice_number),
+    UNIQUE (site_id, refund_id), -- Clave primaria compuesta
+    
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, invoice_id) REFERENCES invoicing(site_id, invoice_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_refund_id CASCADE;
+CREATE INDEX idx_invoicing_refunds_refund_id on invoicing_refunds (site_id, refund_id);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_customer_code CASCADE;
+CREATE INDEX idx_invoicing_refunds_customer_code on invoicing_refunds (site_id, customer_code);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_refund_invoice_number CASCADE;
+CREATE INDEX idx_invoicing_refunds_refund_invoice_number on invoicing_refunds (site_id, refund_invoice_number);
+
+DROP TABLE IF EXISTS montant CASCADE;
+CREATE TABLE montant (
+    montant_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- Identificador único
+    site_id BIGINT NOT NULL,                                      -- Cliente/Tenant
+    range_from DOUBLE PRECISION,                                  -- Límite inferior del rango
+    range_to DOUBLE PRECISION,                                    -- Límite superior del rango
+    amount DOUBLE PRECISION,                                      -- Monto correspondiente
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, range_from, range_to),                       -- Asegurar que no haya rangos duplicados para el mismo sitio
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+-- Índices recomendados
+DROP INDEX IF EXISTS idx_montant_site_from CASCADE;
+DROP INDEX IF EXISTS idx_montant_site_to CASCADE;
+CREATE INDEX idx_montant_site_from ON montant (site_id, range_from);
+CREATE INDEX idx_montant_site_to ON montant (site_id, range_to);
+
+DROP TABLE IF EXISTS recency CASCADE;
+CREATE TABLE recency (
+    recency_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    range_from TEXT,
+    range_to TEXT,
+    recency_label TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, recency_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_recency_recency_id CASCADE;
+CREATE INDEX idx_recency_recency_id ON recency (site_id, recency_id);
+DROP INDEX IF EXISTS idx_recency_site_label CASCADE;
+CREATE INDEX idx_recency_site_label ON recency (site_id, recency_label);
+
+DROP TABLE IF EXISTS customer_participants CASCADE;
+
+CREATE TABLE customer_participants (
+    customer_participant_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,         -- FK a customers
+    customer_code BIGINT NOT NULL,       -- Código de cliente redundante
+    action TEXT,
+    marked TEXT,
+    reading_date DATE,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, customer_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_customer_participants_site_customer ON customer_participants (site_id, customer_id);
+CREATE INDEX idx_customer_participants_site_code ON customer_participants (site_id, customer_code);
+
+DROP TABLE IF EXISTS product_unavailable CASCADE;
+
+CREATE TABLE product_unavailable (
+    unavailable_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    reference TEXT,
+    catalog TEXT,
+    description TEXT,
+    max_quantity INT,
+    used_quantity INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_by TEXT,
+    updated_at TIMESTAMP,
+    modified_by TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+
+    UNIQUE (site_id, unavailable_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_product_unavailable_site_reference ON product_unavailable (site_id, reference);
+
+DROP TABLE IF EXISTS product_unavailable_log CASCADE;
+
+CREATE TABLE product_unavailable_log (
+    unavailable_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    order_reference TEXT,         -- PEDIDO
+    reference TEXT,               -- REFERENCIA
+    order_line INT,               -- LINEA_PEDIDO
+    quantity INT,                 -- CANT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by TEXT,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_product_unavailable_log_site_order ON product_unavailable_log (site_id, order_reference);
+CREATE INDEX idx_product_unavailable_log_site_reference ON product_unavailable_log (site_id, reference);
+
+DROP TABLE IF EXISTS stock_entries CASCADE;
+CREATE TABLE stock_entries (
+    stock_entry_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,              -- FK a products
+    reference TEXT,                          -- Opcional si quieres duplicar el campo
+    description TEXT,
+    quantity NUMERIC(19,4),                  -- Cantidad, ahora numérico
+    invoice_or_delivery TEXT,                -- ALBARAN_FACTURA
+    supplier TEXT,
+    entry_date DATE,                         -- Fecha de entrada
+    worker TEXT,
+    entry_type TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, product_id) REFERENCES products(site_id, product_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_stock_entries_site_product ON stock_entries (site_id, product_id);
+CREATE INDEX idx_stock_entries_site_supplier ON stock_entries (site_id, supplier);
+
+-- Crear el tipo ENUM si no existe
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'error_severity') THEN
+    CREATE TYPE error_severity AS ENUM ('info', 'warning', 'error', 'critical');
+  END IF;
+END$$;
+
+-- Crear la tabla error_log
+DROP TABLE IF EXISTS error_log CASCADE;
+CREATE TABLE error_log (
+    error_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    event_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- FECHA
+    order_reference TEXT,                              -- PEDIDO
+    description TEXT,                                  -- DESCRIPCION
+    section TEXT,                                      -- SECCION
+    user_name TEXT,                                    -- USUARIO
+    severity error_severity DEFAULT 'error',           -- Gravedad (ENUM: info, warning, error, critical)
+    is_saved BOOLEAN NOT NULL DEFAULT FALSE,           -- GRABADO
+    is_modified BOOLEAN NOT NULL DEFAULT FALSE,        -- MODIFICADO
+    is_invoiced BOOLEAN NOT NULL DEFAULT FALSE,        -- FACTURADO
+    is_resolved BOOLEAN NOT NULL DEFAULT FALSE,        -- Solucionado o pendiente
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_error_log_site_order ON error_log (site_id, order_reference);
+CREATE INDEX idx_error_log_site_section ON error_log (site_id, section);
+CREATE INDEX idx_error_log_site_severity ON error_log (site_id, severity);
+CREATE INDEX idx_error_log_site_resolved ON error_log (site_id, is_resolved);
+
+-- =========================================================
+-- SITES
+-- =========================================================
+INSERT INTO sites (site_name, site_description, contact_info, is_active)
+VALUES ('MAYLIS', 'Maylis Promovent', 'info@maylis.com', TRUE)
+ON CONFLICT (site_name) DO NOTHING;
+
+INSERT INTO sites (site_name, site_description, contact_info, is_active)
+VALUES ('MIRECAR', 'Mirecar', 'info@mirecar.com', TRUE)
+ON CONFLICT (site_name) DO NOTHING;
+
+INSERT INTO sites (site_name, site_description, contact_info, is_active)
+VALUES ('INSPMUSEES', 'Inspiration Musees', 'info@museos.com', TRUE)
+ON CONFLICT (site_name) DO NOTHING;
+
+-- 2. Modificar tu script para usar bcrypt:
+-- =========================================================
+-- USERS + USER_SITE (con bcrypt)
+-- =========================================================
+INSERT INTO users (user_name, user_password, email, is_admin, is_active, created_by)
+VALUES ('Iván', crypt('P@rcel2025', gen_salt('bf')), 'ilopez@parcelontime.es', TRUE, TRUE, 1)
+ON CONFLICT (email) DO NOTHING;
+
+-- Vinculaciones básicas (idempotentes)
+INSERT INTO user_site (user_id, site_id)
+SELECT u.user_id, s.site_id
+FROM users u CROSS JOIN sites s
+WHERE u.email = 'ilopez@parcelontime.es'
+  AND s.site_name IN ('MAYLIS','MIRECAR','INSPMUSEES')
+  AND NOT EXISTS (
+    SELECT 1 FROM user_site us
+    WHERE us.user_id = u.user_id AND us.site_id = s.site_id
+  );
+
+INSERT INTO users (user_name, user_password, email, is_admin, is_active, created_by)
+VALUES ('Judith', crypt('P@rcel2025', gen_salt('bf')), 'jpuig@parcelontime.es', FALSE, TRUE, 1)
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_site (user_id, site_id)
+SELECT u.user_id, s.site_id
+FROM users u
+JOIN sites s ON s.site_name IN ('MAYLIS','MIRECAR')
+WHERE u.email = 'jpuig@parcelontime.es'
+  AND NOT EXISTS (SELECT 1 FROM user_site us WHERE us.user_id=u.user_id AND us.site_id=s.site_id);
+
+-- Algunos usuarios inactivos de prueba (con bcrypt)
+DO $$
+DECLARE
+  v_emails text[] := ARRAY[
+    'sad1@parcelontime.es','sad2@parcelontime.es','sad3@parcelontime.es',
+    'sad4@parcelontime.es','sad5@parcelontime.es','sad6@parcelontime.es',
+    'sad7@parcelontime.es','sad8@parcelontime.es','sad9@parcelontime.es','sad10@parcelontime.es'
+  ];
+  v_idx int;
+  v_user_id bigint;
+  v_site_id bigint;
+BEGIN
+  FOR v_idx IN 1..array_length(v_emails,1) LOOP
+    INSERT INTO users (user_name, user_password, email, is_admin, is_active, created_by)
+    VALUES ('TEST '||v_idx, crypt('P@rcel2025', gen_salt('bf')), v_emails[v_idx], FALSE, FALSE, 1) -- 👈 BCRYPT
+    ON CONFLICT (email) DO NOTHING;
+
+    SELECT user_id INTO v_user_id FROM users WHERE email = v_emails[v_idx];
+    SELECT site_id INTO v_site_id FROM sites WHERE site_name='INSPMUSEES';
+
+    IF v_user_id IS NOT NULL AND v_site_id IS NOT NULL THEN
+      INSERT INTO user_site (user_id, site_id)
+      SELECT v_user_id, v_site_id
+      WHERE NOT EXISTS (
+        SELECT 1 FROM user_site us WHERE us.user_id=v_user_id AND us.site_id=v_site_id
+      );
+    END IF;
+  END LOOP;
+END$$;
+
+-- =========================================================
+-- SEED PRINCIPAL (idempotente) – order_sources, customer_types, brands x3
+-- =========================================================
+DO $$
+DECLARE
+  -- Obtener IDs reales de sites
+  site_ids BIGINT[] := ARRAY[
+    (SELECT site_id FROM sites WHERE site_name='MAYLIS' LIMIT 1),
+    (SELECT site_id FROM sites WHERE site_name='MIRECAR' LIMIT 1),
+    (SELECT site_id FROM sites WHERE site_name='INSPMUSEES' LIMIT 1)
+  ];
+  s BIGINT;
+
+  -- BRANDS por site
+  v_brand1_id bigint;  -- Albor
+  v_brand2_id bigint;  -- Brava
+  v_brand3_id bigint;  -- Cobalto
+
+  v_category_id     bigint;
+  v_priority_id     bigint;
+
+  v_action_prim     bigint;
+  v_action_ver      bigint;
+
+  j                 int;         -- cliente 1..5
+  v_customer_code   bigint;
+  v_customer_id     bigint;
+
+  v_order_ref       text;
+  v_payment_id      bigint;
+  v_order_id        bigint;
+
+  v_amount          numeric(19,4);
+  v_bi              numeric(19,4);
+  v_tva             numeric(19,4);
+  v_return_id       bigint;
+
+  -- productos
+  refA text; refB text; refC text; refD text; refE text; refF text; refG text;
+  refCALT text; refEALT text;
+
+  v_prod_id bigint;
+
+  reserve_paid boolean;
+  create_shipped boolean;
+  create_invoiced boolean;
+
+  -- Order sources y tipos de cliente
+  v_source_web_id bigint;
+  v_source_phone_id bigint;
+  v_source_market_id bigint;
+  v_source_pos_id bigint;
+
+  v_ct_retail_id bigint;
+  v_ct_wholesale_id bigint;
+  v_ct_vip_id bigint;
+
+  -- Nombres reales ficticios
+  arr_first_names text[] := ARRAY['Lucía','Mateo','Sofía','Hugo','Valeria','Daniel','Paula','Leo','Martina','Pablo'];
+  arr_last_names  text[] := ARRAY['García','Martínez','López','Sánchez','Fernández','Gómez','Díaz','Ruiz','Hernández','Navarro'];
+  v_fn text; v_ln text; idx int;
+
+  -- Marca a usar por pedido (según acción)
+  v_brand_for_order bigint;
+
+  -- usuario auditor
+  v_created_by bigint := (SELECT user_id FROM users WHERE email='ilopez@parcelontime.es' LIMIT 1);
+BEGIN
+  FOREACH s IN ARRAY site_ids LOOP
+    EXIT WHEN s IS NULL;
+
+    --------------------------------------------------------------------
+    -- 0) BRANDS x3 / CATEGORY / PRIORITY (idempotentes por site)
+    --------------------------------------------------------------------
+    -- Albor
+    SELECT b.brand_id INTO v_brand1_id
+    FROM brands b
+    WHERE b.site_id = s AND b.brand_name = 'Albor';
+    IF v_brand1_id IS NULL THEN
+      INSERT INTO brands (site_id, brand_name, description, is_active, created_by)
+      VALUES (s, 'Albor', 'Marca Albor', TRUE, v_created_by)
+      RETURNING brand_id INTO v_brand1_id;
+    END IF;
+
+    -- Brava
+    SELECT b.brand_id INTO v_brand2_id
+    FROM brands b
+    WHERE b.site_id = s AND b.brand_name = 'Brava';
+    IF v_brand2_id IS NULL THEN
+      INSERT INTO brands (site_id, brand_name, description, is_active, created_by)
+      VALUES (s, 'Brava', 'Marca Brava', TRUE, v_created_by)
+      RETURNING brand_id INTO v_brand2_id;
+    END IF;
+
+    -- Cobalto
+    SELECT b.brand_id INTO v_brand3_id
+    FROM brands b
+    WHERE b.site_id = s AND b.brand_name = 'Cobalto';
+    IF v_brand3_id IS NULL THEN
+      INSERT INTO brands (site_id, brand_name, description, is_active, created_by)
+      VALUES (s, 'Cobalto', 'Marca Cobalto', TRUE, v_created_by)
+      RETURNING brand_id INTO v_brand3_id;
+    END IF;
+
+    -- Categoría / prioridad
+    SELECT c.action_category_id INTO v_category_id
+    FROM action_categories c
+    WHERE c.site_id = s AND c.category_name = 'CategoriaTest';
+    IF v_category_id IS NULL THEN
+      INSERT INTO action_categories (site_id, category_name, description, created_by)
+      VALUES (s, 'CategoriaTest', 'Categoría de prueba', v_created_by)
+      RETURNING action_category_id INTO v_category_id;
+    END IF;
+
+    SELECT p.action_priority_id INTO v_priority_id
+    FROM action_priority_types p
+    WHERE p.site_id = s AND p.priority_name = 'NORMAL';
+    IF v_priority_id IS NULL THEN
+      INSERT INTO action_priority_types (site_id, priority_name, created_by)
+      VALUES (s, 'NORMAL', v_created_by)
+      RETURNING action_priority_id INTO v_priority_id;
+    END IF;
+
+    --------------------------------------------------------------------
+    -- 0.1) ORDER_SOURCES (Web, Phone, Marketplace, POS)
+    --------------------------------------------------------------------
+    PERFORM 1 FROM order_sources WHERE site_id=s AND lower(source_name)='web';
+    IF NOT FOUND THEN
+      INSERT INTO order_sources (site_id, source_name, description, is_active, created_by)
+      VALUES (s, 'Web', 'Pedido desde la web', TRUE, v_created_by);
+    END IF;
+    PERFORM 1 FROM order_sources WHERE site_id=s AND lower(source_name)='phone';
+    IF NOT FOUND THEN
+      INSERT INTO order_sources (site_id, source_name, description, is_active, created_by)
+      VALUES (s, 'Phone', 'Pedido por teléfono', TRUE, v_created_by);
+    END IF;
+    PERFORM 1 FROM order_sources WHERE site_id=s AND lower(source_name)='marketplace';
+    IF NOT FOUND THEN
+      INSERT INTO order_sources (site_id, source_name, description, is_active, created_by)
+      VALUES (s, 'Marketplace', 'Pedido importado de marketplace', TRUE, v_created_by);
+    END IF;
+    PERFORM 1 FROM order_sources WHERE site_id=s AND lower(source_name)='pos';
+    IF NOT FOUND THEN
+      INSERT INTO order_sources (site_id, source_name, description, is_active, created_by)
+      VALUES (s, 'POS', 'Pedido en punto de venta', TRUE, v_created_by);
+    END IF;
+
+    SELECT order_source_id INTO v_source_web_id
+    FROM order_sources WHERE site_id=s AND lower(source_name)='web' LIMIT 1;
+    SELECT order_source_id INTO v_source_phone_id
+    FROM order_sources WHERE site_id=s AND lower(source_name)='phone' LIMIT 1;
+    SELECT order_source_id INTO v_source_market_id
+    FROM order_sources WHERE site_id=s AND lower(source_name)='marketplace' LIMIT 1;
+    SELECT order_source_id INTO v_source_pos_id
+    FROM order_sources WHERE site_id=s AND lower(source_name)='pos' LIMIT 1;
+
+    --------------------------------------------------------------------
+    -- 0.2) CUSTOMER_TYPES (Retail, Wholesale, VIP)
+    --------------------------------------------------------------------
+    PERFORM 1 FROM customer_types WHERE site_id=s AND type_code=1;
+    IF NOT FOUND THEN
+      INSERT INTO customer_types (site_id, type_code, type_name, description, created_by)
+      VALUES (s, 1, 'Retail', 'Cliente minorista estándar', v_created_by);
+    END IF;
+
+    PERFORM 1 FROM customer_types WHERE site_id=s AND type_code=2;
+    IF NOT FOUND THEN
+      INSERT INTO customer_types (site_id, type_code, type_name, description, created_by)
+      VALUES (s, 2, 'Wholesale', 'Cliente mayorista', v_created_by);
+    END IF;
+
+    PERFORM 1 FROM customer_types WHERE site_id=s AND type_code=3;
+    IF NOT FOUND THEN
+      INSERT INTO customer_types (site_id, type_code, type_name, description, created_by)
+      VALUES (s, 3, 'VIP', 'Cliente VIP', v_created_by);
+    END IF;
+
+    SELECT customer_type_id INTO v_ct_retail_id
+      FROM customer_types WHERE site_id=s AND type_code=1;
+    SELECT customer_type_id INTO v_ct_wholesale_id
+      FROM customer_types WHERE site_id=s AND type_code=2;
+    SELECT customer_type_id INTO v_ct_vip_id
+      FROM customer_types WHERE site_id=s AND type_code=3;
+
+    --------------------------------------------------------------------
+    -- 1) ACCIONES por site (Primavera/Verano)
+    --    Primavera -> Albor (brand1)
+    --    Verano    -> Brava (brand2)
+    --------------------------------------------------------------------
+    SELECT a.action_id INTO v_action_prim
+    FROM actions a
+    WHERE a.site_id = s AND a.action_name = 'Campaña Primavera';
+    IF v_action_prim IS NULL THEN
+      INSERT INTO actions (
+        site_id, action_name, description, launch_date, brand_id, deposit_date,
+        action_category_id, is_active, created_by
+      )
+      VALUES (s, 'Campaña Primavera', 'Promoción Primavera', NOW(), v_brand1_id, NOW(), v_category_id, TRUE, v_created_by)
+      RETURNING action_id INTO v_action_prim;
+    END IF;
+
+    SELECT a.action_id INTO v_action_ver
+    FROM actions a
+    WHERE a.site_id = s AND a.action_name = 'Campaña Verano';
+    IF v_action_ver IS NULL THEN
+      INSERT INTO actions (
+        site_id, action_name, description, launch_date, brand_id, deposit_date,
+        action_category_id, is_active, created_by
+      )
+      VALUES (s, 'Campaña Verano', 'Promoción Verano', NOW(), v_brand2_id, NOW(), v_category_id, TRUE, v_created_by)
+      RETURNING action_id INTO v_action_ver;
+    END IF;
+
+    --------------------------------------------------------------------
+    -- 2) 5 CLIENTES por site + CATALOGO de productos por cliente
+    --------------------------------------------------------------------
+    FOR j IN 1..5 LOOP
+      v_customer_code := s * 100000 + 1000 + j;
+
+      -- Nombres reales ficticios
+      idx := ((j - 1) % array_length(arr_first_names,1)) + 1;
+      v_fn := arr_first_names[idx];
+      v_ln := arr_last_names[idx];
+
+      -- Elegir tipo de cliente (reutilizamos v_prod_id solo como holder)
+      SELECT CASE
+               WHEN j % 5 = 0 THEN v_ct_vip_id
+               WHEN j % 2 = 0 THEN v_ct_wholesale_id
+               ELSE v_ct_retail_id
+             END
+        INTO v_prod_id;
+
+      -- Cliente
+      SELECT cu.customer_id INTO v_customer_id
+      FROM customers cu
+      WHERE cu.site_id = s AND cu.customer_code = v_customer_code;
+
+      IF v_customer_id IS NULL THEN
+        INSERT INTO customers (
+          site_id, customer_code, customer_type_id,
+          customer_gender, customer_first_name, customer_last_name,
+          -- Billing
+          billing_first_name, billing_last_name, billing_address_line1, billing_address_cp, billing_address_city, billing_mobile_phone,
+          -- Shipping (añadimos line2..4)
+          shipping_first_name, shipping_last_name,
+          shipping_address_line1, shipping_address_line2, shipping_address_line3, shipping_address_line4,
+          shipping_address_cp, shipping_address_city, shipping_mobile_phone,
+          email, is_active, created_by
+        )
+        VALUES (
+          s, v_customer_code, v_prod_id,
+          CASE WHEN j % 2 = 0 THEN 'F' ELSE 'M' END,
+          v_fn, v_ln,
+          -- Billing
+          v_fn, v_ln, 'Calle ' || j, '2800' || j, 'Madrid', '60012345' || j,
+          -- Shipping con direcciones variadas
+          v_fn, v_ln,
+          'Calle ' || j,
+          'Piso ' || ((j % 6) + 1) || ' Esc. ' || chr(65 + (j % 3)),                          -- A, B, C...
+          'Bloque ' || ((j % 4) + 1) || ' Puerta ' || lpad(((j % 20) + 1)::text, 2, '0'),     -- Puerta 01..20
+          (ARRAY['Centro','Salamanca','Retiro','Usera','Latina','Chamartín'])[(j % 6) + 1],
+          '2800' || j, 'Madrid', '60012345' || j,
+          lower(translate(v_fn,'áéíóúÁÉÍÓÚ','aeiouAEIOU')) || '.' || lower(v_ln) || '+site' || s || '@example.com',
+          true, v_created_by
+        )
+        RETURNING customer_id INTO v_customer_id;
+      END IF;
+
+      -- Refs de productos
+      refA := 'PROD-A' || j; refB := 'PROD-B' || j; refC := 'PROD-C' || j; refD := 'PROD-D' || j;
+      refE := 'PROD-E' || j; refF := 'PROD-F' || j; refG := 'PROD-G' || j;
+      refCALT := 'PROD-CALT' || j; refEALT := 'PROD-EALT' || j;
+
+      -- PRODUCTS idempotentes (A/B -> brand1; C/D/CALT -> brand2; E/F/G/EALT -> brand3)
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refA;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refA, 'CAT-A', v_brand1_id, 'Articulo A '||j, 35.00, 200, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refB;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refB, 'CAT-B', v_brand1_id, 'Articulo B '||j, 20.00, 200, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refC;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refC, 'CAT-C', v_brand2_id, 'Articulo C '||j, 22.00, 0, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refD;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refD, 'CAT-D', v_brand2_id, 'Articulo D '||j, 30.00, 200, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refE;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refE, 'CAT-E', v_brand3_id, 'Articulo E '||j, 28.00, 0, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refF;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refF, 'CAT-F', v_brand3_id, 'Articulo F '||j, 40.00, 200, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refG;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refG, 'CAT-G', v_brand3_id, 'Articulo G '||j, 32.00, 200, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refCALT;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refCALT, 'CAT-CALT', v_brand2_id, 'Articulo C ALT '||j, 21.00, 0, v_created_by);
+      END IF;
+
+      PERFORM 1 FROM products WHERE site_id=s AND product_ref=refEALT;
+      IF NOT FOUND THEN
+        INSERT INTO products (site_id, product_ref, catalog, brand_id, description, price, stock, created_by)
+        VALUES (s, refEALT, 'CAT-EALT', v_brand3_id, 'Articulo E ALT '||j, 27.00, 200, v_created_by);
+      END IF;
+
+      -- STOCK ENTRIES (idempotentes)
+      FOR refA IN SELECT unnest(ARRAY[refA,refB,refC,refD,refE,refF,refG,refCALT,refEALT]) LOOP
+        SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refA;
+        IF v_prod_id IS NOT NULL THEN
+          PERFORM 1 FROM stock_entries se
+          WHERE se.site_id=s AND se.product_id=v_prod_id AND se.invoice_or_delivery='SEED-'||s||'-'||v_prod_id;
+          IF NOT FOUND THEN
+            INSERT INTO stock_entries (
+              site_id, product_id, reference, description, quantity, invoice_or_delivery,
+              supplier, entry_date, worker, entry_type, created_by
+            ) VALUES (
+              s, v_prod_id, refA, 'Entrada seed '||refA, 100, 'SEED-'||s||'-'||v_prod_id,
+              'Proveedor Seed', CURRENT_DATE, 'seed', 'IN', v_created_by
+            );
+          END IF;
+        END IF;
+      END LOOP;
+
+      -- REGLAS DE SUSTITUTOS
+      PERFORM 1 FROM product_substitutes WHERE site_id=s AND ref_start=refE AND ref_end=refEALT;
+      IF NOT FOUND THEN
+        INSERT INTO product_substitutes (
+          site_id, ref_start, cat_start, desc_start, ref_end, cat_end, desc_end,
+          max_quantity, used_quantity, expires_at, created_by, is_active
+        ) VALUES (
+          s, refE, 'CAT-E', 'Articulo E '||j, refEALT, 'CAT-EALT', 'Articulo E ALT '||j,
+          999, 0, CURRENT_DATE + INTERVAL '90 days', v_created_by, TRUE
+        );
+      END IF;
+
+      PERFORM 1 FROM product_substitutes WHERE site_id=s AND ref_start=refC AND ref_end=refCALT;
+      IF NOT FOUND THEN
+        INSERT INTO product_substitutes (
+          site_id, ref_start, cat_start, desc_start, ref_end, cat_end, desc_end,
+          max_quantity, used_quantity, expires_at, created_by, is_active
+        ) VALUES (
+          s, refC, 'CAT-C', 'Articulo C '||j, refCALT, 'CAT-CALT', 'Articulo C ALT '||j,
+          999, 0, CURRENT_DATE + INTERVAL '90 days', v_created_by, TRUE
+        );
+      END IF;
+
+      ----------------------------------------------------------------
+      -- 3) PEDIDOS – con order_source_id (usamos Web)
+      --    Marca del pedido según acción:
+      --      - Si usa v_action_prim  -> v_brand1_id
+      --      - Si usa v_action_ver   -> v_brand2_id
+      ----------------------------------------------------------------
+      reserve_paid :=
+            (s = (SELECT site_id FROM sites WHERE site_name='MAYLIS') AND j IN (1,3))
+         OR (s = (SELECT site_id FROM sites WHERE site_name='MIRECAR') AND j IN (2,3,4))
+         OR (s = (SELECT site_id FROM sites WHERE site_name='INSPMUSEES'));
+
+      create_shipped := NOT ( (s = (SELECT site_id FROM sites WHERE site_name='MIRECAR') AND j IN (1,2))
+                              OR (s = (SELECT site_id FROM sites WHERE site_name='MAYLIS') AND j = 5) );
+      create_invoiced := NOT ( (s = (SELECT site_id FROM sites WHERE site_name='INSPMUSEES') AND j = 5)
+                               OR (s = (SELECT site_id FROM sites WHERE site_name='MAYLIS') AND j = 1) );
+
+      -- (A) PENDING
+      v_order_ref := 'S'||s||'-C'||j||'-PEN';
+      v_brand_for_order := CASE WHEN (j%2=0) THEN v_brand1_id ELSE v_brand2_id END;
+      v_amount    := 35.00; v_bi := round(v_amount/1.21, 2); v_tva := v_amount - v_bi;
+
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference=v_order_ref;
+      IF NOT FOUND THEN
+        INSERT INTO order_payments (site_id, order_id, payment_type, is_deferred, schedule_count, amount, created_by)
+        VALUES (s, -1, 'efectivo', FALSE, 1, v_amount, v_created_by)
+        RETURNING order_payments_id INTO v_payment_id;
+
+        INSERT INTO orders (
+          site_id, order_datetime, order_reference, brand_id, order_source_id,
+          action_id, action_category_id, action_priority_id,
+          shipping_cost, customer_id, first_name, last_name, payment_type_id,
+          is_paid, paid_at, is_invoiced, invoiced_at, order_lines, order_amount, bi1, tva1,
+          status, created_by
+        )
+        VALUES (
+          s, NOW(), v_order_ref, v_brand_for_order, v_source_web_id,
+          CASE WHEN j%2=0 THEN v_action_prim ELSE v_action_ver END, v_category_id, v_priority_id,
+          3.50, v_customer_id, v_fn, v_ln, v_payment_id,
+          FALSE, NULL, FALSE, NULL, 1, v_amount, v_bi, v_tva, 'pending', v_created_by
+        )
+        RETURNING order_id INTO v_order_id;
+
+        UPDATE order_payments SET order_id=v_order_id
+        WHERE site_id=s AND order_payments_id=v_payment_id;
+
+        SELECT p.product_id INTO v_prod_id
+        FROM products p WHERE p.site_id=s AND p.product_ref=refA;
+
+        INSERT INTO order_items (
+          site_id, order_id, line_number, product_id, product_ref, quantity,
+          product_description, unit_price, line_total, created_by
+        )
+        VALUES (s, v_order_id, 1, v_prod_id, refA, 1, 'Articulo A'||j, v_amount, v_amount, v_created_by);
+      END IF;
+
+      -- (B) RESERVED
+      v_order_ref := 'S'||s||'-C'||j||'-RES';
+      v_brand_for_order := CASE WHEN reserve_paid THEN v_brand2_id ELSE v_brand1_id END;
+      v_amount    := 42.00; v_bi := round(v_amount/1.21, 2); v_tva := v_amount - v_bi;
+
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference=v_order_ref;
+      IF NOT FOUND THEN
+        INSERT INTO order_payments (site_id, order_id, payment_type, is_deferred, schedule_count, amount, created_by)
+        VALUES (s, -1, 'efectivo', FALSE, 1, v_amount, v_created_by)
+        RETURNING order_payments_id INTO v_payment_id;
+
+        INSERT INTO orders (
+          site_id, order_datetime, order_reference, brand_id, order_source_id,
+          action_id, action_category_id, action_priority_id,
+          shipping_cost, customer_id, first_name, last_name, payment_type_id,
+          is_paid, paid_at, is_invoiced, invoiced_at, order_lines, order_amount, bi1, tva1,
+          status, created_by
+        )
+        VALUES (
+          s, NOW() - INTERVAL '1 day', v_order_ref, v_brand_for_order, v_source_web_id,
+          CASE WHEN reserve_paid THEN v_action_ver ELSE v_action_prim END, v_category_id, v_priority_id,
+          4.00, v_customer_id, v_fn, v_ln, v_payment_id,
+          reserve_paid, CASE WHEN reserve_paid THEN NOW() ELSE NULL END,
+          FALSE, NULL, 2, v_amount, v_bi, v_tva, 'reserved', v_created_by
+        )
+        RETURNING order_id INTO v_order_id;
+
+        UPDATE order_payments SET order_id=v_order_id
+        WHERE site_id=s AND order_payments_id=v_payment_id;
+
+        SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refB;
+        INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+        VALUES (s, v_order_id, 1, v_prod_id, refB, 1, 'Articulo B'||j, 20.00, 20.00, v_created_by);
+
+        SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refC;
+        INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+        VALUES (s, v_order_id, 2, v_prod_id, refC, 1, 'Articulo C'||j, v_amount-20.00, v_amount-20.00, v_created_by);
+      END IF;
+
+      -- (C) SHIPPED
+      v_order_ref := 'S'||s||'-C'||j||'-SHP';
+      v_brand_for_order := v_brand1_id; -- p.ej. asocia a Primavera
+      v_amount    := 58.00; v_bi := round(v_amount/1.21, 2); v_tva := v_amount - v_bi;
+
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference=v_order_ref;
+      IF NOT FOUND THEN
+        IF create_shipped THEN
+          INSERT INTO order_payments (site_id, order_id, payment_type, is_deferred, schedule_count, amount, created_by)
+          VALUES (s, -1, 'tarjeta', FALSE, 1, v_amount, v_created_by)
+          RETURNING order_payments_id INTO v_payment_id;
+
+          INSERT INTO orders (
+            site_id, order_datetime, order_reference, brand_id, order_source_id,
+            action_id, action_category_id, action_priority_id,
+            shipping_cost, customer_id, first_name, last_name, payment_type_id,
+            is_paid, paid_at, is_invoiced, invoiced_at, order_lines, order_amount, bi1, tva1,
+            status, created_by
+          )
+          VALUES (
+            s, NOW() - INTERVAL '2 days', v_order_ref, v_brand_for_order, v_source_web_id,
+            v_action_prim, v_category_id, v_priority_id,
+            5.00, v_customer_id, v_fn, v_ln, v_payment_id,
+            TRUE, NOW() - INTERVAL '2 days', FALSE, NULL, 2, v_amount, v_bi, v_tva, 'shipped', v_created_by
+          )
+          RETURNING order_id INTO v_order_id;
+
+          UPDATE order_payments SET order_id=v_order_id
+          WHERE site_id=s AND order_payments_id=v_payment_id;
+
+          SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refD;
+          INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+          VALUES (s, v_order_id, 1, v_prod_id, refD, 1, 'Articulo D'||j, 30.00, 30.00, v_created_by);
+
+          SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refE;
+          INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+          VALUES (s, v_order_id, 2, v_prod_id, refE, 1, 'Articulo E'||j, v_amount-30.00, v_amount-30.00, v_created_by);
+
+          IF NOT EXISTS (
+            SELECT 1 FROM order_payment_schedules
+            WHERE site_id=s AND order_payments_id=v_payment_id AND schedule_number=1
+          ) THEN
+            INSERT INTO order_payment_schedules (
+              site_id, order_payments_id, schedule_number, amount, due_date, is_paid, paid_date, created_by
+            ) VALUES (s, v_payment_id, 1, v_amount, NOW() - INTERVAL '2 days', TRUE, NOW() - INTERVAL '2 days', v_created_by);
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM returns r WHERE r.site_id=s AND r.order_reference=v_order_ref
+          ) THEN
+            INSERT INTO returns (site_id, order_reference, return_date, customer_code, created_by)
+            VALUES (s, v_order_ref, NOW() - INTERVAL '1 day', v_customer_code, v_created_by)
+            RETURNING return_id INTO v_return_id;
+
+            INSERT INTO return_items (return_id, product_ref, quantity, reason, created_by)
+            VALUES (v_return_id, refE, 1, 'No conforme', v_created_by);
+          END IF;
+        END IF;
+      END IF;
+
+      -- Sustitución en SHIPPED (E → EALT)
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference='S'||s||'-C'||j||'-SHP';
+      IF FOUND THEN
+        SELECT oi.order_item_id INTO v_prod_id
+        FROM order_items oi
+        JOIN orders o ON o.order_id=oi.order_id AND o.site_id=oi.site_id
+        WHERE o.site_id=s AND o.order_reference='S'||s||'-C'||j||'-SHP' AND oi.product_ref=refE
+        LIMIT 1;
+
+        IF v_prod_id IS NOT NULL THEN
+          PERFORM 1 FROM order_item_substitutes
+          WHERE site_id=s AND order_item_id=v_prod_id AND substitute_product_ref=refEALT;
+          IF NOT FOUND THEN
+            INSERT INTO order_item_substitutes (
+              site_id, order_item_id, substitute_product_ref, substitute_catalog_ref, substitute_catalog_code,
+              substitute_quantity, substitute_description, substitute_import, created_by
+            ) VALUES (
+              s, v_prod_id, refEALT, 'REF-'||refEALT, 'CAT-EALT',
+              1, 'Sustituto de '||refE, 27.00, v_created_by
+            );
+          END IF;
+        END IF;
+      END IF;
+
+      -- (D) INVOICED
+      v_order_ref := 'S'||s||'-C'||j||'-INV';
+      v_brand_for_order := v_brand2_id;
+      v_amount    := 72.00; v_bi := round(v_amount/1.21, 2); v_tva := v_amount - v_bi;
+
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference=v_order_ref;
+      IF NOT FOUND THEN
+          INSERT INTO order_payments (site_id, order_id, payment_type, is_deferred, schedule_count, amount, created_by)
+          VALUES (s, -1, 'tarjeta', FALSE, 1, v_amount, v_created_by)
+          RETURNING order_payments_id INTO v_payment_id;
+
+          INSERT INTO orders (
+            site_id, order_datetime, order_reference, brand_id, order_source_id,
+            action_id, action_category_id, action_priority_id,
+            shipping_cost, customer_id, first_name, last_name, payment_type_id,
+            is_paid, paid_at, is_invoiced, invoiced_at, order_lines, order_amount, bi1, tva1,
+            status, created_by
+          )
+          VALUES (
+            s, NOW() - INTERVAL '3 days', v_order_ref, v_brand_for_order, v_source_web_id,
+            v_action_ver, v_category_id, v_priority_id,
+            6.00, v_customer_id, v_fn, v_ln, v_payment_id,
+            TRUE, NOW() - INTERVAL '3 days', TRUE, NOW() - INTERVAL '2 days',
+            2, v_amount, v_bi, v_tva, 'invoiced', v_created_by
+          )
+          RETURNING order_id INTO v_order_id;
+
+          UPDATE order_payments SET order_id=v_order_id
+          WHERE site_id=s AND order_payments_id=v_payment_id;
+
+          SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refF;
+          INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+          VALUES (s, v_order_id, 1, v_prod_id, refF, 1, 'Articulo F'||j, 40.00, 40.00, v_created_by);
+
+          SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refG;
+          INSERT INTO order_items (site_id, order_id, line_number, product_id, product_ref, quantity, product_description, unit_price, line_total, created_by)
+          VALUES (s, v_order_id, 2, v_prod_id, refG, 1, 'Articulo G'||j, v_amount-40.00, v_amount-40.00, v_created_by);
+
+          IF NOT EXISTS (
+            SELECT 1 FROM order_payment_schedules
+            WHERE site_id=s AND order_payments_id=v_payment_id AND schedule_number=1
+          ) THEN
+            INSERT INTO order_payment_schedules (
+              site_id, order_payments_id, schedule_number, amount, due_date, is_paid, paid_date, created_by
+            ) VALUES (s, v_payment_id, 1, v_amount, NOW() - INTERVAL '3 days', TRUE, NOW() - INTERVAL '3 days', v_created_by);
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM invoicing i WHERE i.site_id=s AND i.order_reference=v_order_ref
+          ) THEN
+            INSERT INTO invoicing (
+              site_id, invoicing_date, invoice_number, customer_code, first_name, last_name,
+              order_reference, bi1, tva1, total, created_by
+            )
+            VALUES (
+              s, NOW() - INTERVAL '2 days', 'FAC-'||s||'-'||v_customer_code, v_customer_code, v_fn, v_ln,
+              v_order_ref, v_bi, v_tva, v_amount, v_created_by
+            );
+          END IF;
+      END IF;
+
+      -- (E) CANCELLED
+      v_order_ref := 'S'||s||'-C'||j||'-CXL';
+      v_brand_for_order := v_brand1_id;
+      v_amount    := 28.00; v_bi := round(v_amount/1.21, 2); v_tva := v_amount - v_bi;
+
+      PERFORM 1 FROM orders o WHERE o.site_id=s AND o.order_reference=v_order_ref;
+      IF NOT FOUND THEN
+        INSERT INTO order_payments (site_id, order_id, payment_type, is_deferred, schedule_count, amount, created_by)
+        VALUES (s, -1, 'efectivo', FALSE, 1, v_amount, v_created_by)
+        RETURNING order_payments_id INTO v_payment_id;
+
+        INSERT INTO orders (
+          site_id, order_datetime, order_reference, brand_id, order_source_id,
+          action_id, action_category_id, action_priority_id,
+          shipping_cost, customer_id, first_name, last_name, payment_type_id,
+          is_paid, paid_at, is_invoiced, invoiced_at, order_lines, order_amount, bi1, tva1,
+          status, is_annulled, annulled_at, annulled_by, created_by
+        )
+        VALUES (
+          s, NOW() - INTERVAL '1 day', v_order_ref, v_brand_for_order, v_source_web_id,
+          v_action_prim, v_category_id, v_priority_id,
+          2.50, v_customer_id, v_fn, v_ln, v_payment_id,
+          FALSE, NULL, FALSE, NULL, 1, v_amount, v_bi, v_tva,
+          'cancelled', TRUE, NOW() - INTERVAL '1 day', v_created_by, v_created_by
+        )
+        RETURNING order_id INTO v_order_id;
+
+        UPDATE order_payments SET order_id=v_order_id
+        WHERE site_id=s AND order_payments_id=v_payment_id;
+
+        SELECT p.product_id INTO v_prod_id FROM products p WHERE p.site_id=s AND p.product_ref=refA;
+        INSERT INTO order_items (
+          site_id, order_id, line_number, product_id, product_ref, quantity,
+          product_description, unit_price, line_total, created_by
+        )
+        VALUES (s, v_order_id, 1, v_prod_id, refA, 1, 'Articulo Cancelado '||j, v_amount, v_amount, v_created_by);
+      END IF;
+
+    END LOOP; -- clientes
+  END LOOP; -- sites
+END$$;
+
+-- =====================================================================
+-- Backfill de direcciones de pedido (idempotente, mantiene nombres reales)
+-- =====================================================================
+DO $$
+DECLARE r RECORD; v_created_by bigint := (SELECT user_id FROM users WHERE email='ilopez@parcelontime.es' LIMIT 1);
+BEGIN
+  FOR r IN
+    SELECT o.order_id, o.site_id, o.order_reference,
+           o.first_name AS ofn, o.last_name AS oln,
+           c.billing_first_name AS bfn, c.billing_last_name AS bln,
+           c.billing_address_line1 AS baddr1, c.billing_address_line2 AS baddr2, 
+           c.billing_address_line3 AS baddr3, c.billing_address_line4 AS baddr4, 
+           c.billing_address_cp AS bcp, c.billing_address_city AS bcity, c.billing_mobile_phone AS bphone,
+           c.shipping_first_name AS sfn, c.shipping_last_name AS sln,
+           c.shipping_address_line1 AS saddr1, c.shipping_address_line2 AS saddr2, 
+           c.shipping_address_line3 AS saddr3, c.shipping_address_line4 AS saddr4, 
+           c.shipping_address_cp AS scp, c.shipping_address_city AS scity, c.shipping_mobile_phone AS sphone
+    FROM orders o
+    LEFT JOIN customers c ON c.site_id=o.site_id AND c.customer_id=o.customer_id
+    WHERE o.site_id IN (
+      (SELECT site_id FROM sites WHERE site_name='MAYLIS'),
+      (SELECT site_id FROM sites WHERE site_name='MIRECAR'),
+      (SELECT site_id FROM sites WHERE site_name='INSPMUSEES')
+    )
+      AND NOT EXISTS (
+        SELECT 1 FROM order_addresses oa 
+        WHERE oa.site_id=o.site_id AND oa.order_id=o.order_id
+      )
+  LOOP
+    INSERT INTO order_addresses (
+      order_id, site_id, order_reference,
+      billing_customer_name, billing_address_line1, billing_address_line2, billing_address_line3, billing_address_line4, billing_postal_code, billing_city, billing_mobile_phone,
+      shipping_customer_name, shipping_address_line1, shipping_address_line2, shipping_address_line3, shipping_address_line4, shipping_postal_code, shipping_city, shipping_mobile_phone,
+      created_by
+    )
+    VALUES (
+      r.order_id, r.site_id, r.order_reference,
+      COALESCE(r.bfn || ' ' || r.bln, r.ofn || ' ' || r.oln, 'Cliente Seed'),
+      COALESCE(r.baddr1, 'Dirección ' || r.site_id), r.baddr2, r.baddr3, r.baddr4, r.bcp, r.bcity, r.bphone,
+      COALESCE(r.sfn || ' ' || r.sln, r.ofn || ' ' || r.oln, 'Cliente Seed'),
+      COALESCE(r.saddr1, COALESCE(r.baddr1, 'Dirección ' || r.site_id)), r.saddr2, r.saddr3, r.saddr4, COALESCE(r.scp, r.bcp), COALESCE(r.scity, r.bcity), COALESCE(r.sphone, r.bphone),
+      v_created_by
+    );
+  END LOOP;
+END$$;

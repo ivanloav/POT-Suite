@@ -1,0 +1,320 @@
+.base-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.base-form-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-md);
+  position: relative;
+}
+
+.base-form-group.error .base-form-input-wrapper input,
+.base-form-group.error .base-form-input-wrapper select,
+.base-form-group.error .base-form-input-wrapper textarea {
+  border-color: #dc3545;
+}
+
+.base-form-label {
+  display: flex;
+  align-items: center;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: var(--text-md);
+  width: 140px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.base-form-label .required {
+  color: #dc3545;
+  margin-left: 2px;
+}
+
+.base-form-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* Inputs base */
+.base-form-input-wrapper input,
+.base-form-input-wrapper select,
+.base-form-input-wrapper textarea {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-xs) var(--space-md); /* Reducido de space-sm a space-xs (4px vs 8px) */
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-md) !important;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: white;
+}
+
+.base-form-input-wrapper input:focus,
+.base-form-input-wrapper select:focus,
+.base-form-input-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.base-form-input-wrapper input::placeholder {
+  color: #9ca3af;
+  font-size: var(--text-sm);
+}
+
+/* Select específicos - UNIFICAR en una sola regla */
+.base-form-input-wrapper select {
+  padding: var(--space-xs) var(--space-md); /* Padding reducido para coincidir con SearchableSelect */
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--space-md) center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-right: calc(var(--space-md) + 24px);
+}
+
+.base-form-input-wrapper input {
+  cursor: text; /* 👈 Cursor apropiado para inputs */
+}
+
+.base-form-input-wrapper select:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.base-form-input-wrapper option:disabled {
+  color: #9ca3af;
+}
+
+/* Textarea específicos */
+.base-form-input-wrapper textarea {
+  resize: vertical;
+  min-height: var(--textarea-height-lg);
+  height: auto; /* 👈 Override del height fijo */
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Error messages */
+.base-form-error {
+  color: #dc3545;
+  font-size: var(--text-sm);
+  margin-top: var(--space-xs);
+}
+
+/* Checkbox Field */
+.base-checkbox-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.base-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: var(--text-md);
+  color: var(--text-color);
+  gap: var(--space-sm);
+}
+
+.base-checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--focus-color);
+}
+
+.base-checkbox-input:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.base-checkbox-text {
+  user-select: none;
+}
+
+/* MultiSelectField styles */
+.multi-select-field .multi-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.multi-select-input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-md);
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: white;
+  cursor: pointer;
+  
+  /* 👈 FORZAR apariencia de listbox */
+  min-height: 140px !important;
+  max-height: 200px !important;
+  height: 140px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  
+  /* 👈 QUITAR apariencia de dropdown */
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  
+  /* 👈 ASEGURAR que sea múltiple */
+  size: 8 !important;
+  
+  /* 👈 ESTILOS de scroll personalizado */
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f9f9f9;
+  
+  padding: var(--space-xs) 0;
+  resize: none;
+  display: block;
+}
+
+/* 👈 WEBKIT scrollbar personalizado */
+.multi-select-input::-webkit-scrollbar {
+  width: 8px;
+}
+
+.multi-select-input::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.multi-select-input::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.multi-select-input::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* 👈 ESPECÍFICO para select múltiple */
+.multi-select-input[multiple] {
+  height: 140px !important;
+  min-height: 140px !important;
+  size: 8 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  padding: var(--space-xs) 0 !important;
+}
+
+/* 👈 OPCIONES más compactas */
+.multi-select-input option {
+  padding: var(--space-sm) var(--space-lg) !important;
+  cursor: pointer;
+  font-size: var(--text-md);
+  line-height: 1;
+  min-height: 16px;
+  display: block;
+  border: none;
+  
+  /* 👈 MEJORAR selección visual */
+  transition: background-color 0.2s ease;
+}
+
+.multi-select-input option:checked {
+  background: var(--focus-color) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.multi-select-input option:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.multi-select-input option:not(:checked):hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: inherit !important;
+}
+
+/* 👈 FOCUS mejorado */
+.multi-select-input:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.multi-select-field.error .multi-select-input {
+  border-color: #dc3545;
+}
+
+/* 👈 INFO y HINT */
+.multi-select-info {
+  font-size: var(--text-sm);
+  color: var(--focus-color);
+  font-weight: 500;
+  padding: var(--space-xs) 0;
+}
+
+.multi-select-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .base-form-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-xs);
+  }
+  
+  .base-form-label {
+    width: 100%;
+    font-size: var(--text-sm);
+  }
+  
+  .base-form-input-wrapper input,
+  .base-form-input-wrapper select,
+  .base-form-input-wrapper textarea {
+    max-width: none;
+    font-size: var(--text-sm);
+  }
+
+  .base-checkbox-label {
+    font-size: var(--text-sm);
+  }
+  
+  .base-checkbox-input {
+    width: 16px;
+    height: 16px;
+  }
+    
+  .multi-select-input {
+    min-height: 120px !important;
+    max-height: 160px !important;
+    height: 120px !important;
+    size: 6 !important;
+    padding: var(--space-xs) 0 !important;
+  }
+  
+  .multi-select-input[multiple] {
+    height: 120px !important;
+    size: 6 !important;
+  }
+  
+  .multi-select-input option {
+    padding: 2px var(--space-sm);
+    min-height: 20px;
+    line-height: 1.1;
+  }
+}

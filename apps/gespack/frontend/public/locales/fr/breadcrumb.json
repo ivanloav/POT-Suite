@@ -1,0 +1,16 @@
+{
+  "login": "Connexion",
+  "home": "Accueil",
+  "dashboard": "Tableau de bord",
+  "customerDetail": "Client {{id}}",
+  "users": {
+    "label": "Utilisateurs",
+    "list": "Liste des utilisateurs",
+    "usersList": "Liste des utilisateurs"
+  },
+  "orders": {
+    "label": "Commandes",
+    "list": "Liste des commandes"
+  },
+  "settings": "Configuration"
+}

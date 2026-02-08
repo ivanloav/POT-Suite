@@ -1,0 +1,34 @@
+CREATE TABLE actions (
+    action_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                      -- ID único para cada acción
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    action_name TEXT NOT NULL,                                                      -- ACCION
+    description TEXT,                                                               -- DESCRIPCION
+    launch_date TIMESTAMP NOT NULL,                                                 -- FECHA_LANZAMIENTO
+    brand_id BIGINT NOT NULL,                                                                     -- Marca
+    print_run INT,                                                                  -- TIRADA
+    deposit_date TIMESTAMP NOT NULL,                                                -- DATE_DEPOT
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ESTADO
+    catalog_code TEXT,                                                              -- CODE_CATALOGUE
+    catalog_lot TEXT,                                                               -- LOT_CATALOGUE
+    catalog_description TEXT,                                                       -- DESC_CATALOGUE
+    action_category_id INT,  -- Categoría de la acción
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    updated_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+
+    UNIQUE (site_id, action_name),                                                   -- Clave única compuesta
+    UNIQUE (site_id, action_id),                                                    -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, action_category_id) REFERENCES action_categories(site_id, action_category_id) ON DELETE SET NULL, -- Referencia a categorías
+    FOREIGN KEY (site_id, brand_id) REFERENCES brands(site_id, brand_id) ON DELETE SET NULL -- Referencia a brands
+);
+
+DROP INDEX IF EXISTS idx_actions_action_id CASCADE;
+CREATE INDEX idx_actions_action_id ON actions (site_id, action_id);
+
+DROP INDEX IF EXISTS idx_actions_action_name CASCADE;
+CREATE INDEX idx_actions_action_name ON actions (site_id, action_name);
+
+

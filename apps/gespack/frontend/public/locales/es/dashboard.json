@@ -1,0 +1,43 @@
+{
+    "title": "Panel de control",
+    "sections": {
+      "general": "General",
+      "admin": "Administración"
+    },
+
+    "actions": {
+      "resetCard": "Restablecer panel",
+      "exportStats": "Exportar estadísticas",
+      "import": "Importar",
+      "refresh": "Actualizar",
+      "resetFilters": "Restablecer filtros",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "update": "Actualizar",
+      "create": "Crear",
+      "edit": "Editar"
+    },
+
+    "badges": {
+      "hot": "Popular",
+      "beta": "Beta",
+      "wip": "En desarrollo"
+    },
+
+    "card": {
+      "orders": {
+        "pendingInvoicing": "Pedidos pendientes de facturar",
+        "recorded": "Pedidos grabados",
+        "pendingPayment": "Pedidos pendientes de cobrar",
+        "invoiced": "Pedidos facturados"
+      },
+      "products": {
+        "pendingInvoicing": "Productos pendientes de facturar",
+        "outOfStock": "Productos agotados"
+      },
+      "footer": {
+        "orders": "LISTA DE PEDIDOS",
+        "products": "DETALLES DE PRODUCTOS"
+      }
+    }
+}

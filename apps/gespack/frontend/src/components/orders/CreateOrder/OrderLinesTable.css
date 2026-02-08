@@ -1,0 +1,297 @@
+/* Mostrar flechas en inputs tipo number dentro del modal BAV */
+.promo-modal-input[type="number"]::-webkit-inner-spin-button,
+.promo-modal-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: auto;
+  margin: 0;
+}
+.promo-modal-input[type="number"] {
+  appearance: auto;
+}
+:root {
+  --table-height-xs: 0.625rem; /* 10px */
+  --table-height-sm: 0.75rem;  /* 12px */
+  --table-height-md: 1rem;     /* 16px */
+  --table-height-lg: 1.25rem;  /* 20px */
+  --table-height-xl: 1.5rem;   /* 24px */
+  --table-height-2xl: 1.75rem;  /* 28px */
+  --table-height-3xl: 2rem;    /* 32px */
+  --table-height-4xl: 2.5rem;  /* 40px */
+  --table-height-5xl: 3rem;    /* 48px */
+}
+.simple-order-lines-table {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: white;
+  position: relative;
+  max-height: 500px; /* Altura máxima para la tabla */
+  min-height: 200px; /* Altura mínima para la tabla */
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  gap: 1px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0; /* Header fijo */
+}
+
+.table-header,
+.table-row {
+  grid-template-columns: 70px 1fr 70px 2.5fr 100px 120px;
+}
+/* Cuando hay botones de eliminar, activar la 7ª columna */
+.table-header.with-delete-buttons,
+.table-row.with-delete-buttons {
+  grid-template-columns: 60px 1fr 60px 2fr 100px 100px 50px;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #f8f9fa;
+  overflow-y: auto; /* Scroll vertical cuando sea necesario */
+  flex: 1; /* Ocupar el espacio restante */
+  position: relative;
+}
+
+.table-row {
+  display: grid;
+  gap: 1px;
+  background: white;
+  position: relative;
+  z-index: 2;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Cuando hay botones de eliminar, activar la 7ª columna */
+
+.header-cell {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: var(--text-md);
+  text-transform: uppercase;
+  color: #6b7280;
+  background: #f8f9fa;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  font-size: var(--text-lg);
+  height: var(--table-height-xl);
+}
+
+.table-cell {
+  background: white;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  height: var(--table-height-5xl);
+}
+
+.table-cell:last-child,
+.header-cell:last-child {
+  border-right: none;
+}
+
+/* Solo eliminar borde derecho de IMPORT cuando hay 7 columnas (con botones) */
+.table-header.with-delete-buttons .header-cell:nth-last-child(2),
+.table-row.with-delete-buttons .table-cell:nth-last-child(2) {
+  border-right: none;
+}
+
+/* Inputs específicos */
+.line-input,
+.quantity-input,
+.description-input,
+.price-input,
+.import-input {
+  width: 100%;
+  border: none;
+  padding: 6px 8px;
+  font-size: var(--text-xl);
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.line-input:disabled,
+.description-input:disabled,
+.price-input:disabled,
+.import-input:disabled {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.quantity-input:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* El wrapper que añadimos para marcar REFERENCE */
+.reference-col .reference-field {
+  flex: 1 1 auto;   /* que crezca y ocupe el hueco */
+  width: 100%;
+  min-width: 0;     /* importantísimo en layouts flex para evitar recortes */
+}
+
+/* Asegura que el componente ocupe todo el ancho dentro del wrapper */
+.reference-col .reference-field > .searchable-select {
+  display: block;   /* por si fuera inline-block */
+  width: 100%;
+}
+
+/* SearchableSelect en la columna de referencia */
+.reference-col .searchable-select {
+  width: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+/* Quitar borde del SearchableSelect */
+.reference-col .searchable-select input {
+  border: none !important;
+  box-shadow: none !important;
+  background: white;
+  font-size: var(--text-xl);
+}
+
+.reference-col .searchable-select input::placeholder {
+  font-size: var(--text-xl) !important;
+}
+
+.reference-col .searchable-select input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Asegurar que el dropdown del SearchableSelect se muestre por encima */
+.reference-col .searchable-select .searchable-select-dropdown {
+  z-index: 10000 !important;
+  position: absolute !important;
+  max-height: 250px !important; /* Altura máxima del dropdown */
+  overflow-y: auto !important;
+}
+
+@media (max-height: 1080px) {
+  .header-cell {
+    font-size: var(--text-sm);
+    height: var(--table-height-xs);
+  }
+
+  .table-cell {
+    font-size: var(--text-sm);
+    height: var(--table-height-3xl);
+  }
+  .line-input,
+  .quantity-input,
+  .description-input,
+  .price-input,
+  .import-input,
+  .reference-col .searchable-select input {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Asegurar que las filas de la tabla permitan que los dropdowns se vean */
+.table-row:has(.searchable-select[data-open="true"]) {
+  z-index: 100;
+  position: relative;
+}
+
+/* Botón para eliminar línea */
+.remove-line-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  line-height: 1;
+  transition: background-color 0.2s ease;
+  margin: 0 auto; /* Centrar en la columna */
+}
+
+.remove-line-btn:hover {
+  background: #dc2626;
+}
+
+/* Footer con botón para agregar línea */
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f8f9fa;
+  border-top: 1px solid var(--border-color);
+}
+
+.add-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-lg);
+  background: var(--focus-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  outline: none;
+  gap: 10px;
+}
+
+.BAV-btn {
+  background: #FFE066; /* Verde */
+  color: #000;
+}
+
+.add-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.BAV-btn:hover {
+  background: #FFD700; /* Amarillo */
+}
+
+.add-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-height: 1080px) {
+  .simple-order-lines-table {
+    max-height: 240px; /* Altura máxima para la tabla */
+    min-height: 150px; /* Altura mínima para la tabla */
+  }
+  .add-btn {
+    font-size: var(--text-sm);
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  .reference-col .searchable-select input::placeholder {
+    font-size: var(--text-sm) !important;
+  }
+}

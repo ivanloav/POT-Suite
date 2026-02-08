@@ -1,0 +1,31 @@
+CREATE TABLE product_substitutes_log (
+  log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  site_id BIGINT NOT NULL,                                      -- ID del sitio
+  substitute_id BIGINT NOT NULL,                               -- ID autoincremental
+
+  order_id VARCHAR(50),                                         -- PEDIDO
+  is_bundle BOOLEAN,                                            -- IS_BUNDLE
+  bundle_id VARCHAR(50),                                        -- ID_BUNDLE
+  sku_bundle VARCHAR(50),                                       -- SKU_BUNDLE
+  sku_wms VARCHAR(50),                                          -- SKU_WMS
+  quantity INT,                                                 -- QTY
+  order_line VARCHAR(50),                                       -- LINEA_PEDIDO
+  description TEXT,                                             -- DESCRIPCION
+  price NUMERIC(10,2),                                          -- PRECIO
+  total NUMERIC(10,2),                                          -- IMP
+  sku_wms_substitute VARCHAR(50),                               -- SKU_WMS_SUST
+  quantity_substitute INT,                                      -- QTY_SUST
+  description_substitute TEXT,                                  -- DESC_SUST
+  price_substitute NUMERIC(10,2),                               -- PRECIO_SUST
+  total_substitute NUMERIC(10,2),                               -- IMP_SUST
+  apology_phrase TEXT,                                          -- FRASE_DISCULPA
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,               -- DATE_CREATION
+  created_by TEXT,                                              -- CREATED_BY
+
+  UNIQUE (site_id, substitute_id),                                    -- 🔐 Clave primaria compuesta
+
+FOREIGN KEY (site_id, substitute_id) REFERENCES product_substitutes(site_id, substitute_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_product_substitutes_log_site_id ON product_substitutes_log (site_id, substitute_id);

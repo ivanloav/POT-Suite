@@ -1,0 +1,67 @@
+DROP TABLE IF EXISTS customers CASCADE;
+CREATE TABLE customers (
+    customer_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,        -- NUMERO_DE_CLIENT
+    site_id BIGINT NOT NULL,                                            -- ID_SITE (ID del sitio)
+    customer_code BIGINT NOT NULL,                                      -- NUMERO_DE_CLIENT
+    customer_gender TEXT,                                               -- SEXO (Género)
+    customer_first_name TEXT,                                           -- NOMBRE (Nombre del cliente)
+    customer_last_name TEXT,                                            -- APELLIDO (Apellido del cliente)
+
+    -- Dirección de facturación     
+    billing_gender TEXT,                                                -- SEXO (Género)
+    billing_first_name TEXT,                                            -- NOM (Primer nombre)
+    billing_last_name TEXT,                                             -- APE (Apellido)
+    billing_address_line1 TEXT,                                         -- DIR1 (Dirección línea 1)
+    billing_address_line2 TEXT,                                         -- DIR2 (Dirección línea 2)
+    billing_address_line3 TEXT,                                         -- DIR3 (Dirección línea 3)
+    billing_address_line4 TEXT,                                         -- DIR4 (Dirección línea 4)
+    billing_address_cp TEXT,                                            -- CP (Dirección línea 5)
+    billing_address_city TEXT,                                          -- POBLACION (Dirección línea 5)
+    billing_address_country TEXT,                                       -- PAIS (Dirección línea 5)
+    billing_mobile_phone TEXT,                                          -- PORTABLE (Teléfono móvil)
+    -- Dirección de envío                               
+    shipping_gender TEXT,                                               -- SEXO (Género)
+    shipping_first_name TEXT,                                           -- NOM (Primer nombre)
+    shipping_last_name TEXT,                                            -- APE (Apellido)
+    shipping_address_line1 TEXT,                                        -- DIR1 (Dirección línea 1)
+    shipping_address_line2 TEXT,                                        -- DIR2 (Dirección línea 2)
+    shipping_address_line3 TEXT,                                        -- DIR3 (Dirección línea 3)
+    shipping_address_line4 TEXT,                                        -- DIR4 (Dirección línea 4)
+    shipping_address_cp TEXT,                                           -- CP (Dirección línea 5)
+    shipping_address_city TEXT,                                         -- POBLACION (Dirección línea 5)
+    shipping_address_country TEXT,                                      -- PAIS (Dirección línea 5)
+    shipping_mobile_phone TEXT,                                         -- PORTABLE (Teléfono móvil)
+
+    phone TEXT,                                                         -- TEL (Teléfono)
+    customer_type_id BIGINT,                                            -- TIPO_DE_CLIENTE (Tipo de cliente, FK a customer_types)
+    birth_date DATE,                                                    -- FECHA_NACIMIENTO (Fecha de nacimiento)
+    npai TEXT,                                                          -- P1 (NPAI)
+    rfm TEXT,                                                           -- Q1 (RFM)
+    -- credit_risk TEXT,                                                   -- R1 (MOROSOS Y MALPAGADORES)
+    -- source_origin TEXT,                                                 -- S1 (Campo adicional S1)
+    -- is_under_guardianship BOOLEAN NOT NULL DEFAULT FALSE,               -- TUTELADO (Tutelado, booleano con valor predeterminado FALSE)
+    -- is_deceased BOOLEAN NOT NULL DEFAULT FALSE,                         -- DECEDE (Fallecido, booleano con valor predeterminado FALSE)
+    -- do_not_contact BOOLEAN NOT NULL DEFAULT FALSE,                      -- ROBINSON (Robinson, booleano con valor predeterminado FALSE)
+    rnvp_type_id INT,                                                   -- RNVP (Tipo de RNVP)
+    -- marked_id INT,                                                      -- MARCADO (Tipo de marcado)
+    -- insert TEXT,                                                     -- ENCARTE (Inserto)
+    email TEXT,                                                         -- EMAIL (Correo electrónico)
+    privileged BOOLEAN NOT NULL DEFAULT FALSE,                          -- PRIVILEGIE (Privilegiado, booleano con valor predeterminado FALSE)
+    privileged_date DATE,                                               -- DATE_PRIVILEGIE (Fecha de privilegio)
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,                           -- ACTIVO (Activo, booleano con valor predeterminado FALSE)
+    created_by TEXT,                                                    -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                     -- FECHA_CREACION
+    updated_by TEXT,                                                   -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                    -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, customer_code),
+    UNIQUE (site_id, customer_id),                                     -- Clave primaria compuesta
+
+    FOREIGN KEY (site_id, rnvp_type_id) REFERENCES customer_rnvp_types (site_id, rnvp_type_id),
+    -- FOREIGN KEY (site_id, marked_type_id) REFERENCES customer_marked_types (site_id, marked_type_id),
+    FOREIGN KEY (site_id, customer_type_id) REFERENCES customer_types (site_id, customer_type_id)
+);
+
+    CREATE INDEX idx_customers_code ON customers (site_id, customer_code);
+    CREATE INDEX idx_customers_last_name ON customers (customer_last_name);
+ 

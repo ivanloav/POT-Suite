@@ -1,0 +1,119 @@
+-- =========================================================
+--  TABLA USER_SITE
+-- =========================================================
+DROP TABLE IF EXISTS user_site CASCADE;
+
+CREATE TABLE user_site (
+    user_site_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id      BIGINT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    site_id      BIGINT NOT NULL REFERENCES sites(site_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_user_site UNIQUE (user_id, site_id)  -- evita duplicados
+);
+
+CREATE INDEX idx_user_site_user ON user_site (user_id);
+CREATE INDEX idx_user_site_site ON user_site (site_id);
+
+-- =========================================================
+--  FUNCIONES AUXILIARES
+-- =========================================================
+
+-- 1) Tocar updated_at en updates de users
+CREATE OR REPLACE FUNCTION fn_users_touch_modified()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at := CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2) Normalizar email a minúsculas/trim en users
+CREATE OR REPLACE FUNCTION fn_users_normalize_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.email IS NOT NULL THEN
+    NEW.email := lower(btrim(NEW.email));
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3) Recalcular total_site para un user_id dado
+CREATE OR REPLACE FUNCTION fn_user_site_sync_total(p_user_id BIGINT)
+RETURNS VOID AS $$
+DECLARE
+  v_total BIGINT;
+BEGIN
+  SELECT COUNT(*) INTO v_total
+  FROM user_site
+  WHERE user_id = p_user_id;
+
+  UPDATE users
+     SET total_site = COALESCE(v_total, 0),
+         updated_at = CURRENT_TIMESTAMP
+   WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
+--  TRIGGERS
+-- =========================================================
+
+-- users: tocar updated_at en UPDATE
+DROP TRIGGER IF EXISTS trg_users_touch_modified ON users;
+CREATE TRIGGER trg_users_touch_modified
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION fn_users_touch_modified();
+
+-- users: normalizar email en INSERT/UPDATE
+DROP TRIGGER IF EXISTS trg_users_normalize_email ON users;
+CREATE TRIGGER trg_users_normalize_email
+BEFORE INSERT OR UPDATE OF email ON users
+FOR EACH ROW
+EXECUTE FUNCTION fn_users_normalize_email();
+
+-- user_site: manejar cambios en UPDATE
+CREATE OR REPLACE FUNCTION fn_user_site_after_upd()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    PERFORM fn_user_site_sync_total(OLD.user_id);
+    PERFORM fn_user_site_sync_total(NEW.user_id);
+  ELSE
+    PERFORM fn_user_site_sync_total(NEW.user_id);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- user_site: mantener total_site al INSERT
+DROP TRIGGER IF EXISTS trg_user_site_after_ins ON user_site;
+CREATE TRIGGER trg_user_site_after_ins
+AFTER INSERT ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+-- user_site: mantener total_site al DELETE
+DROP TRIGGER IF EXISTS trg_user_site_after_del ON user_site;
+CREATE TRIGGER trg_user_site_after_del
+AFTER DELETE ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+DROP TRIGGER IF EXISTS trg_user_site_after_upd ON user_site;
+CREATE TRIGGER trg_user_site_after_upd
+AFTER UPDATE ON user_site
+FOR EACH ROW
+EXECUTE FUNCTION fn_user_site_after_upd();
+
+-- =========================================================
+--  OPCIONAL: inicializar total_site para datos existentes
+-- =========================================================
+UPDATE users u
+   SET total_site = s.cnt
+  FROM (SELECT user_id, COUNT(*)::BIGINT AS cnt 
+        FROM user_site 
+        GROUP BY user_id) s
+ WHERE u.user_id = s.user_id;

@@ -1,0 +1,90 @@
+{
+    "title": "Welcome to the orders section",
+    "description": "Here you can manage your orders.",
+    "columns": {
+        "orderId": "ID",
+        "siteName": "Site",
+        "orderReference": "Reference",
+        "brandName": "Brand",
+        "actionId": "Action ID",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "fullName": "Full name",
+        "paymentTypeName": "Payment type",
+        "orderAmount": "Amount",
+        "status": "Status",
+        "createdAt": "Creation date"
+    },
+
+    "status": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "invoiced": "Invoiced",
+        "shipped": "Shipped",
+        "reserved": "Reserved",
+        "returned": "Returned",
+        "cancelled": "Cancelled"
+    },
+
+    "filters": {
+        "idPlaceHolder": "ID",
+        "siteNamePlaceHolder": "Site",
+        "orderReferencePlaceHolder": "Order reference",
+        "brandNamePlaceHolder": "Brand",
+        "fullNamePlaceHolder": "Full name",
+        "paymentTypeNamePlaceHolder": "Payment type",
+        "orderAmountPlaceHolder": "Order amount",
+        "createdAtPlaceHolder": "Order date",
+        "statusPlaceHolder": "Status"
+    },
+
+    "actions": {
+        "addOrder": "Create order",
+        "exportStats": "Export statistics",
+        "import": "Import",
+        "refresh": "Refresh",
+        "resetFilters": "Reset filters"
+    },
+
+    "addOrder": {
+        "title": "Create order",
+        "CBReader": "Card reader",
+        "source": "Source",
+        "action": "Action",
+        "participant": "Participant",
+        "customer": "Customer reference",
+        "customerType": "Customer type",
+        "customerName": "Customer name",
+        "customerAddress": "Customer address",
+        "submit": "Create user",
+        "success": "User created successfully",
+        "error": "Error creating user"
+    },
+
+    "orderForm": {
+        "deferredPaymentModal": {
+            "configureCardInstallments": "Configure {{count}} card installments",
+            "configureCheques": "Configure {{count}} checks",
+            "installmentsConfigured": "Installments configured",
+            "chequesConfigured": "Checks configured",
+            "configureInstallments": "Configure installments",
+            "configureChequePayments": "Configure checks",
+            "editSuffix": "(edit)",
+            "cashNotAllowedDeferred": "Deferred payments are not accepted with cash"
+        }
+    },
+
+    "notes": {
+        "title": "Observations",
+        "modalTitle": "Observations",
+        "internal": "Internal",
+        "external": "External",
+        "internalPlaceholder": "Internal observations (visible only to employees)",
+        "externalPlaceholder": "External observations (visible to the customer)",
+        "charactersLeft": "characters left",
+        "save": "Save",
+        "cancel": "Cancel",
+        "internalLimit": "Internal observations (max 255 characters)",
+        "externalLimit": "External observations (max 100 characters)"
+    }
+}

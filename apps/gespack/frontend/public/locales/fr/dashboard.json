@@ -1,0 +1,30 @@
+{
+    "title": "Tableau de bord",
+    "sections": {
+      "general": "Général",
+      "admin": "Administration"
+    },
+
+    "badges": {
+      "hot": "Populaire",
+      "beta": "Bêta",
+      "wip": "En développement"
+    },
+
+    "card": {
+      "orders": {
+        "pendingInvoicing": "Commandes en attente de facturation",
+        "recorded": "Commandes enregistrées",
+        "pendingPayment": "Commandes en attente de paiement",
+        "invoiced": "Commandes facturées"
+      },
+      "products": {
+        "pendingInvoicing": "Produits en attente de facturation",
+        "outOfStock": "Produits en rupture de stock"
+      },
+      "footer": {
+        "orders": "LISTE DES COMMANDES",
+        "products": "DÉTAILS DES PRODUITS"
+      }
+    }
+}

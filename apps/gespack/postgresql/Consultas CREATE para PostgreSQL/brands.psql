@@ -1,0 +1,19 @@
+CREATE TABLE brands (
+    brand_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,                       -- ID único para cada acción
+    site_id BIGINT NOT NULL,                                                        -- ID del sitio al que pertenece la acción
+    brand_name TEXT NOT NULL,                                                      -- MARCA
+    description TEXT,                                                               -- DESCRIPCION
+    start_date DATE,                                                           -- FECHA_INICIO
+    end_date DATE,                                                             -- FECHA_FIN
+    is_active BOOLEAN DEFAULT TRUE,                                                 -- ACTIVO
+    created_by TEXT,                                                                -- CREADOR
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                 -- FECHA_CREACION
+    modified_by TEXT,                                                               -- MODIFICADOR
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                -- FECHA_MODIFICACION
+
+    UNIQUE (site_id, brand_name),                                                -- Clave primaria compuesta
+    UNIQUE (site_id, brand_id)  -- 🔧 Añadir esto
+);
+    
+    CREATE INDEX idx_brands_brand_id ON brands (brand_id);                  -- Índice para mejorar las búsquedas
+    CREATE INDEX idx_brands_brand_name ON brands (brand_name);                     -- Índice para mejorar las búsquedas por marca

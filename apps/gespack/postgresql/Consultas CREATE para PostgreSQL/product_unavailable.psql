@@ -1,0 +1,22 @@
+DROP TABLE IF EXISTS product_unavailable CASCADE;
+
+CREATE TABLE product_unavailable (
+    unavailable_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    reference TEXT,
+    catalog TEXT,
+    description TEXT,
+    max_quantity INT,
+    used_quantity INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_by TEXT,
+    updated_at TIMESTAMP,
+    updated_by TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+
+    UNIQUE (site_id, unavailable_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_product_unavailable_site_reference ON product_unavailable (site_id, reference);

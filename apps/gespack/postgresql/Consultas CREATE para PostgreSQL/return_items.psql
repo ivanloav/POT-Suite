@@ -1,0 +1,16 @@
+CREATE TABLE return_items (
+    return_item_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- PK técnica
+    return_id BIGINT NOT NULL,                                       -- Clave foránea a returns
+    product_ref TEXT NOT NULL,                                      -- Referencia del producto
+    quantity INT NOT NULL,                                          -- Cantidad devuelta
+    reason TEXT,                                                    -- Motivo de la devolución
+    created_by TEXT,                                               -- Auditoría
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (return_id) REFERENCES returns(return_id) ON DELETE CASCADE -- Clave foránea a returns
+);
+
+    CREATE INDEX idx_return_items_return_id ON return_items (return_id);
+    CREATE INDEX idx_return_items_product_ref ON return_items (product_ref);

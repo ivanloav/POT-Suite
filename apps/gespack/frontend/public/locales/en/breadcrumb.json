@@ -1,0 +1,16 @@
+{
+  "login": "Login",
+  "home": "Home",
+  "dashboard": "Dashboard",
+  "customerDetail": "Customer {{id}}",
+  "users": {
+    "label": "Users",
+    "list": "Users list",
+    "usersList": "Users list"
+  },
+  "orders": {
+    "label": "Orders",
+    "list": "Orders list"
+  },
+  "settings": "Settings"
+}

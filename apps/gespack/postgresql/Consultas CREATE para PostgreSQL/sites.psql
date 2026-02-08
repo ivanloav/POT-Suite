@@ -1,0 +1,26 @@
+CREATE TABLE sites (
+    site_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    site_name TEXT NOT NULL CHECK (site_name ~ '^[A-Z]{1,15}$'),
+    site_description TEXT,
+    contact_info TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP.
+
+    UNIQUE (site_name),
+
+    CREATE INDEX idx_sites_site_name ON sites (site_name);
+);
+
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_timestamp
+BEFORE UPDATE ON sites
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();

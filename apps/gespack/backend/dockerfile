@@ -1,0 +1,21 @@
+# Etapa base
+FROM node:23-slim
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar dependencias e instalar
+COPY package*.json ./
+RUN npm install
+
+# Copiar el resto del código
+COPY . .
+
+# (Opcional) Si usas TypeScript, descomenta lo siguiente:
+# RUN npm run build
+
+# Exponer el puerto del backend (debe coincidir con el que usas en Express)
+EXPOSE 5000
+
+# Comando para iniciar
+CMD ["npm", "start"]

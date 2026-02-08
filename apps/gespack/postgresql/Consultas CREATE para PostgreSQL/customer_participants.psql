@@ -1,0 +1,22 @@
+DROP TABLE IF EXISTS customer_participants CASCADE;
+
+CREATE TABLE customer_participants (
+    customer_participant_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,         -- FK a customers
+    customer_code BIGINT NOT NULL,       -- Código de cliente redundante
+    action TEXT,
+    marked TEXT,
+    reading_date DATE,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, customer_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, customer_id) REFERENCES customers(site_id, customer_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_customer_participants_site_customer ON customer_participants (site_id, customer_id);
+CREATE INDEX idx_customer_participants_site_code ON customer_participants (site_id, customer_code);

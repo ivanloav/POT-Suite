@@ -1,0 +1,19 @@
+DROP TABLE IF EXISTS order_payment_types CASCADE;
+
+CREATE TABLE order_payment_types (
+    order_payment_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    payment_type TEXT NOT NULL,           -- efectivo, tarjeta, cheque, aplazado, etc.
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, order_payment_type_id),
+    FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE RESTRICT,
+);
+
+DROP INDEX IF EXISTS idx_order_payments_payment_type CASCADE;
+CREATE INDEX idx_order_payments_payment_type ON order_payments (site_id, payment_type);

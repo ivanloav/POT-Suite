@@ -1,0 +1,44 @@
+CREATE TABLE invoicing_refunds (
+    refund_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    site_id BIGINT NOT NULL,
+    invoice_id BIGINT NOT NULL,
+    refund_date TIMESTAMP,
+    invoice_date TIMESTAMP,
+    brand TEXT,
+    refund_invoice_number TEXT NOT NULL,
+    customer_code BIGINT,
+    first_name TEXT,
+    last_name TEXT,
+    order_reference TEXT,
+    priority_cost NUMERIC(19,4),
+    transport_cost NUMERIC(19,4),
+    total_transport NUMERIC(19,4),
+    colissimo NUMERIC(19,4),
+    bi1 NUMERIC(19,4),
+    tva1 NUMERIC(19,4),
+    bi2 NUMERIC(19,4),
+    tva2 NUMERIC(19,4),
+    total NUMERIC(19,4),
+    status TEXT,
+    worker TEXT,
+    related_invoice TEXT,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_by TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (site_id, refund_invoice_number),
+    UNIQUE (site_id, refund_id), -- Clave primaria compuesta
+    
+    FOREIGN KEY (site_id, customer_code) REFERENCES customers(site_id, customer_code) ON DELETE RESTRICT,
+    FOREIGN KEY (site_id, invoice_id) REFERENCES invoicing(site_id, invoice_id) ON DELETE RESTRICT
+);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_refund_id CASCADE;
+CREATE INDEX idx_invoicing_refunds_refund_id on invoicing_refunds (site_id, refund_id);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_customer_code CASCADE;
+CREATE INDEX idx_invoicing_refunds_customer_code on invoicing_refunds (site_id, customer_code);
+
+DROP INDEX IF EXISTS idx_invoicing_refunds_refund_invoice_number CASCADE;
+CREATE INDEX idx_invoicing_refunds_refund_invoice_number on invoicing_refunds (site_id, refund_invoice_number);

@@ -1,0 +1,105 @@
+{
+  "title": "Utilisateurs",
+  "breadcrumb": {
+    "list": "Liste des utilisateurs",
+    "create": "Créer un utilisateur"
+  },
+
+  "actions": {
+    "addUser": "Créer un utilisateur",
+    "exportStats": "Exporter les statistiques",
+    "import": "Importer",
+    "refresh": "Actualiser",
+    "resetFilters": "Réinitialiser les filtres",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "edit": "Modifier"
+  },
+  
+  "form": {
+    "title": {
+      "create": "Créer un utilisateur",
+      "edit": "Modifier l'utilisateur"
+    },
+    "fields": {
+      "name": "Nom d'utilisateur",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "newPassword": "Nouveau mot de passe (optionnel)",
+      "newPasswordExtraInfo": "Laisser vide pour conserver le mot de passe actuel",
+      "locale": "Langue",
+      "selectLanguage": "Sélectionner une langue...",
+      "labelWithoutLang": "Sans langue spécifique",
+      "isActive": "Est actif",
+      "isActiveTrue": "Actif",
+      "isActiveFalse": "Inactif",
+      "sites": "Sites assignés",
+      "sitesCharge": "Chargement des sites...",
+      "sitesExtraInfo": "Maintenez Ctrl + clic pour sélectionner plusieurs",
+      "permissions": "Permissions supplémentaires :",
+      "isAdmin": "Accès administrateur",
+      "isCustomer": "Accès client",
+      "isCB": "Accès pour voir les cartes de paiement",
+      "isList": "Accès pour voir les listages",
+      "isDailyOrdersReport": "Envoi automatique du rapport quotidien des commandes"
+    },
+    "placeholders": {
+      "selectLanguage": "Sélectionner une langue...",
+      "passwordHelp": "Laisser vide pour conserver le mot de passe actuel"
+    },
+    "messages": {
+      "success": {
+        "create": "Utilisateur créé avec succès",
+        "update": "Utilisateur mis à jour avec succès"
+      },
+      "error": {
+        "create": "Erreur lors de la création de l'utilisateur",
+        "update": "Erreur lors de la mise à jour de l'utilisateur"
+      },
+      "loading": {
+        "create": "Création de l'utilisateur...",
+        "update": "Mise à jour de l'utilisateur...",
+        "loadingData": "Chargement des données de l'utilisateur..."
+      }
+    }
+  },
+
+  "filters": {
+    "idPlaceHolder": "ID",
+    "userNamePlaceHolder": "Nom",
+    "emailPlaceHolder": "Adresse e-mail",
+    "any": "Tout",
+    "totalSitePlaceHolder": "Sites",
+    "createdRangePlaceHolder": "Plage de dates"
+  },
+
+  "columns": {
+    "id": "ID",
+    "email": "Adresse e-mail",
+    "userName": "Nom",
+    "isAdmin": "Admin",
+    "isActive": "Actif",
+    "createdAt": "Créé",
+    "sendDailyOrdersReport": "Rapp. quotidien",
+    "isCB": "CB",
+    "isList": "Listages",
+    "totalSite": "Sites",
+    "isCustomer": "Client"
+  },
+
+  "loading": "Chargement des utilisateurs…",
+  "empty": "Aucun utilisateur",
+  "any": "Tout",
+  "yes": "Oui",
+  "no": "Non",
+
+  "pagination": {
+    "first": "Première",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "last": "Dernière",
+    "pageXofY": "{{page}} sur {{pages}}"
+  }
+}
