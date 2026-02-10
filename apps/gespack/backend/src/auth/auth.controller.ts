@@ -59,6 +59,32 @@ export class AuthController {
     return buildResponse({ user: safeUser }, await i18n.t('auth.login_success'));
   }
 
+  @Post('suite-login')
+  @ApiOperation({ summary: 'Login Operations Hub', description: 'Valida credenciales en auth.users y envía JWT en cookie httpOnly.' })
+  async suiteLogin(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @I18n() i18n: I18nContext,
+  ) {
+    const result = await this.authService.loginSuite(loginDto);
+
+    if (!result.success) {
+      return buildErrorResponse(await i18n.t('auth.credentials_invalid'));
+    }
+
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+    });
+
+    return buildResponse(
+      { user: result.user, apps: result.apps ?? [] },
+      await i18n.t('auth.login_success'),
+    );
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiOperation({ summary: 'Usuario actual', description: 'Devuelve el usuario si el JWT en cookie es válido.' })
@@ -84,7 +110,7 @@ export class AuthController {
   @Get('apps')
   @ApiOperation({ summary: 'Apps disponibles', description: 'Devuelve las apps habilitadas para el usuario.' })
   async apps(@Req() req: Request, @I18n() i18n: I18nContext) {
-    const email = (req.user as any)?.email;
+    const email = ((req as Request & { user?: any }).user)?.email;
     const apps = await this.authService.getAppsForEmail(email);
     return buildResponse({ apps }, await i18n.t('auth.user_data'));
   }

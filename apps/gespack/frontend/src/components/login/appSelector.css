@@ -1,0 +1,63 @@
+.app-select-root {
+  min-height: clamp(420px, 70dvh, 560px);
+}
+
+.app-select-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-select-subtitle {
+  margin: 0 0 8px 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.app-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.app-select-btn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.app-select-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.28);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.app-select-name {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.app-select-code {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.app-select-error {
+  color: #ffd4d4;
+  font-weight: 600;
+  margin: 6px 0 0 0;
+}
+
+@media (max-width: 520px) {
+  .app-select-grid {
+    grid-template-columns: 1fr;
+  }
+}

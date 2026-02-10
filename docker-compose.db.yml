@@ -1,16 +1,16 @@
 services:
   db:
     image: postgres:16
-    container_name: pot_suite_db
+    container_name: operations_hub_db
     restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
       POSTGRES_USER: Ivan
       POSTGRES_PASSWORD: Mbp@Parcel2308
-      POSTGRES_DB: pot_suite
+      POSTGRES_DB: operations_hub
     volumes:
-      - pot-suite-db:/var/lib/postgresql/data
+      - operations-hub-db:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
 
   db-init:
@@ -22,10 +22,10 @@ services:
       - >
         for f in /db-init/*.sql; do
           echo "Running $$f";
-          PGPASSWORD="Mbp@Parcel2308" psql -h db -U Ivan -d pot_suite -v ON_ERROR_STOP=1 -f "$$f";
+          PGPASSWORD="Mbp@Parcel2308" psql -h db -U Ivan -d operations_hub -v ON_ERROR_STOP=1 -f "$$f";
         done
     volumes:
       - ./db/init:/db-init:ro
 
 volumes:
-  pot-suite-db:
+  operations-hub-db:

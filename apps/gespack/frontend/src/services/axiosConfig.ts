@@ -1,6 +1,6 @@
 // frontend/src/services/axiosConfig.ts - VERSIÓN ESPECÍFICA
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL, SUITE_LOGIN_URL } from "../config";
 
 const resolvedBaseURL =
   API_BASE_URL && API_BASE_URL.trim().length > 0
@@ -36,8 +36,8 @@ api.interceptors.response.use(
       clearAuthCookies();
       
       // Redirigir a login si no estamos ya ahí
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
+      if (typeof window !== "undefined" && !window.location.href.includes(SUITE_LOGIN_URL)) {
+        window.location.href = SUITE_LOGIN_URL;
       }
     }
     return Promise.reject(error);

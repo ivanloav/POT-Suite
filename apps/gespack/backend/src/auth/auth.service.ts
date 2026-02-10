@@ -60,4 +60,70 @@ async getAppsForEmail(email: string): Promise<Array<{ code: string; name: string
   );
   return Array.isArray(rows) ? rows : [];
 }
+
+async loginSuite(
+  loginDto: LoginDto,
+): Promise<{ success: boolean; accessToken?: string; user?: any; apps?: Array<{ code: string; name: string }> }> {
+  const { email, password } = loginDto;
+  const rows = await this.dataSource.query(
+    `
+      SELECT id, user_name, email, password_hash, is_active
+      FROM auth.users
+      WHERE email = $1
+    `,
+    [email],
+  );
+
+  const authUser = rows?.[0];
+  if (!authUser || !authUser.is_active) {
+    return { success: false };
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, authUser.password_hash);
+  if (!isPasswordValid) {
+    return { success: false };
+  }
+
+  const apps = await this.getAppsForEmail(authUser.email);
+
+  const gespackUsers = await this.dataSource.query(
+    `
+      SELECT user_id, user_name
+      FROM gespack.users
+      WHERE email = $1
+    `,
+    [authUser.email],
+  );
+  const gespackUser = gespackUsers?.[0];
+  const jwtUserId = gespackUser?.user_id ?? authUser.id;
+
+  const siteRows = gespackUser?.user_id
+    ? await this.dataSource.query(
+        `
+          SELECT site_id
+          FROM gespack.user_site
+          WHERE user_id = $1
+        `,
+        [gespackUser.user_id],
+      )
+    : [];
+  const site_ids = Array.isArray(siteRows) ? siteRows.map((r: any) => Number(r.site_id)) : [];
+
+  const payload = {
+    email: authUser.email,
+    sub: jwtUserId,
+    name: gespackUser?.user_name ?? authUser.user_name ?? authUser.email,
+    site_ids,
+    app_codes: apps.map((a) => a.code),
+  };
+
+  const accessToken = this.jwtService.sign(payload);
+  const safeUser = {
+    id: authUser.id,
+    email: authUser.email,
+    userName: authUser.user_name ?? authUser.email,
+  };
+
+  return { success: true, accessToken, user: safeUser, apps };
+}
 }

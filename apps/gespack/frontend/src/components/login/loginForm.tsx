@@ -43,14 +43,14 @@ export function LoginForm() {
           // Limpia cualquier error previo
           setError(null);
 
-          // Redirección SPA
-          navigate("/user/dashboard", { replace: true });
+          // Redirección a selector de app
+          navigate("/select-app", { replace: true });
 
           // Fallback por si existe un guard que intercepta y redirige al login antes de montar rutas protegidas:
           // fuerza navegación dura para respetar la cookie httpOnly ya seteada.
           setTimeout(() => {
-            if (location.pathname !== "/user/dashboard") {
-              window.location.replace("/user/dashboard");
+            if (location.pathname !== "/select-app") {
+              window.location.replace("/select-app");
             }
           }, 50);
         } else {

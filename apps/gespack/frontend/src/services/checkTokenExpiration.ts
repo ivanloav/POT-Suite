@@ -1,4 +1,5 @@
 import { jwtDecode, JwtPayload } from "jwt-decode";
+import { SUITE_LOGIN_URL } from "../config";
 
 export const checkTokenExpiration = (): void => {
   const tokenMatch = document.cookie.match(/(^| )accessToken=([^;]+)/);
@@ -12,7 +13,7 @@ export const checkTokenExpiration = (): void => {
       // Limpia cookies
       document.cookie = "accessToken=; Max-Age=0; path=/";
       document.cookie = "selectedSite=; Max-Age=0; path=/";
-      window.location.href = "/login";
+      window.location.href = SUITE_LOGIN_URL;
     }
   }
 };

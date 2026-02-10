@@ -1,5 +1,5 @@
 {
-  "name": "pot-suite",
+  "name": "operations-hub",
   "private": true,
   "scripts": {
     "gespack:dev": "sh -c 'npm run gespack:frontend:dev & npm run gespack:backend:dev & wait'",
@@ -9,10 +9,11 @@
     "gespack:backend:dev:docker": "npm --workspace=gespack-backend run dev:docker",
     "gespack:backend:start": "npm --workspace=gespack-backend run start",
     "it:dev": "sh -c 'npm run it:frontend:dev & npm run it:backend:dev & wait'",
-    "it:frontend:dev": "npm --workspace=it-inventory-frontend run dev",
-    "it:frontend:build": "npm --workspace=it-inventory-frontend run build",
-    "it:backend:dev": "npm --workspace=it-inventory-backend run dev",
-    "it:backend:start": "npm --workspace=it-inventory-backend run start"
+    "it:frontend:dev": "npm --workspace=it-deviceops-frontend run dev",
+    "it:frontend:build": "npm --workspace=it-deviceops-frontend run build",
+    "it:backend:dev": "npm --workspace=it-deviceops-backend run dev",
+    "it:backend:start": "npm --workspace=it-deviceops-backend run start",
+    "hub:dev": "npm --workspace=operations-hub-frontend run dev"
   },
   "workspaces": [
     "apps/*/frontend",

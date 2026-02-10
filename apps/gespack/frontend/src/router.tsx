@@ -2,7 +2,8 @@
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
 import { ScreenLayout } from "./components/layout/MainScreenLayout";
-import { LoginForm } from "./components/login/loginForm";
+import { SuiteRedirect } from "./components/login/SuiteRedirect";
+import { AppSelector } from "./components/login/AppSelector";
 import { PrivateRoute } from "./components/routing/PrivateRoute";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { OrdersList } from "./components/orders/OrdersList";
@@ -25,7 +26,12 @@ export const router = createBrowserRouter(
     },
     {
       path: "/login",
-      element: <LoginForm />,
+      element: <SuiteRedirect />,
+      handle: { crumb: (t: any) => ({ label: t("breadcrumb:login") }) },
+    },
+    {
+      path: "/select-app",
+      element: <AppSelector />,
       handle: { crumb: (t: any) => ({ label: t("breadcrumb:login") }) },
     },
 
@@ -111,4 +117,3 @@ export const router = createBrowserRouter(
   // TODO: Add v7_startTransition flag when React Router v7 is released
   // See: https://reactrouter.com/v6/upgrading/future#v7_starttransition
 );
-

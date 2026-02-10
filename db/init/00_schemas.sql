@@ -1,4 +1,4 @@
--- POT Suite init: schemas + extensions
+-- Operations Hub init: schemas + extensions
 CREATE EXTENSION IF NOT EXISTS citext;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

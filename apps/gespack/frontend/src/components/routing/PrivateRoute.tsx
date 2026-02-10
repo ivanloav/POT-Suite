@@ -1,6 +1,7 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { SUITE_LOGIN_URL } from "../../config";
 
 export const PrivateRoute = () => {
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
@@ -25,5 +26,12 @@ export const PrivateRoute = () => {
     );
   }
 
-  return isAuthed ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!isAuthed) {
+    if (typeof window !== "undefined") {
+      window.location.href = SUITE_LOGIN_URL;
+    }
+    return null;
+  }
+
+  return <Outlet />;
 };

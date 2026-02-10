@@ -1,6 +1,6 @@
-import { NavigateFunction } from "react-router-dom";
+import { SUITE_LOGIN_URL } from "../config";
 
-export const handleLogout = async (navigate: NavigateFunction): Promise<void> => {
+export const handleLogout = async (): Promise<void> => {
   try {
     await fetch('/api/auth/logout', {
       method: 'POST',
@@ -11,6 +11,5 @@ export const handleLogout = async (navigate: NavigateFunction): Promise<void> =>
 
   } catch {}
 
-  navigate("/login", { state: { successMessage: "Sesión cerrada correctamente" } });
-  window.location.reload();
+  window.location.assign(SUITE_LOGIN_URL);
 };

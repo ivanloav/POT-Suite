@@ -132,7 +132,7 @@ CREATE INDEX idx_auth_refresh_tokens_revoked ON refresh_tokens(is_revoked) WHERE
 INSERT INTO apps (code, name)
 VALUES
   ('gespack', 'GesPack'),
-  ('it', 'IT Inventory')
+  ('it', 'IT DeviceOps Suite')
 ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO users (user_name, email, password_hash, is_active)

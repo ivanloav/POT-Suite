@@ -1,7 +1,6 @@
 import { Link, useMatches } from "react-router-dom";
 import { useLastOrderReference } from '../../hooks/useLastOrderReference';
 import { useTranslation } from "react-i18next";
-import "./Breadcrumbs.css";
 
 // Estructura normalizada de un "crumb"
 export type Crumb = {
@@ -78,10 +77,10 @@ export default function Breadcrumbs({ actions }: BreadcrumbsProps) {
   if (!crumbs.length) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="breadcrumbs">
-      <div className="breadcrumbs-container">
+    <nav aria-label="Breadcrumb" className="bg-gray-100 dark:bg-gray-800 px-4 py-2.5 rounded-lg mb-4">
+      <div className="grid grid-cols-[minmax(0,_1fr)_max-content] gap-x-4 gap-y-2 items-center">
         {crumbs.length > 0 && (
-          <ul className="breadcrumbs-list">
+          <ul className="flex items-center flex-1 min-w-0 list-none m-0 p-0">
             {crumbs.map((c, i) => {
               const last = i === crumbs.length - 1;
               const text = c.key ? t(c.key) : c.label ?? "";
@@ -91,31 +90,46 @@ export default function Breadcrumbs({ actions }: BreadcrumbsProps) {
               const isNewOrder = c.key === "breadcrumb:orders.new";
 
               return (
-                <li key={`${linkTo}-${i}`} className={last ? "current" : ""}>
+                <li 
+                  key={`${linkTo}-${i}`} 
+                  className={`inline-flex items-center text-gray-600 dark:text-gray-400 font-semibold ${
+                    !last ? "after:content-['›'] after:mx-2.5 after:text-gray-400" : ""
+                  }`}
+                >
                   {!last ? (
-                    <Link to={linkTo}>
-                      {c.Icon ? <c.Icon className="crumb-icon" /> : null}
-                      <span>{text}</span>
+                    <Link to={linkTo} className="inline-flex items-center no-underline text-inherit hover:text-gray-800 dark:hover:text-gray-200">
+                      {c.Icon ? <c.Icon className="mr-1.5 -mt-px" /> : null}
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] inline-block align-middle">
+                        {text}
+                      </span>
                     </Link>
                   ) : (
-                    <>
-                      {c.Icon ? <c.Icon className="crumb-icon" /> : null}
-                      <span>{text}</span>
+                    <span className="inline-flex items-center">
+                      {c.Icon ? <c.Icon className="mr-1.5 -mt-px" /> : null}
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] inline-block align-middle">
+                        {text}
+                      </span>
                       {isNewOrder && (
-                        <span style={{ margin: '0 0.5em' }}>›</span>
+                        <>
+                          <span className="mx-2">›</span>
+                          <span className="font-medium text-gray-500 dark:text-gray-400">
+                            {nextOrderReference(typeof lastOrderReference === "string" ? lastOrderReference : null)}
+                          </span>
+                        </>
                       )}
-                      {isNewOrder && (
-                        <span style={{ fontWeight: 500, color: '#888' }}>{nextOrderReference(typeof lastOrderReference === "string" ? lastOrderReference : null)}</span>
-                      )}
-                    </>
+                    </span>
                   )}
                 </li>
               );
             })}
-
-            {/* Acciones como último <li>, alineado a la derecha */}
-            {actions && <li className="breadcrumbs-actions actions">{actions}</li>}
           </ul>
+        )}
+
+        {/* Acciones como columna aparte, alineadas a la derecha */}
+        {actions && (
+          <div className="flex items-center gap-2 flex-wrap justify-end ml-auto">
+            {actions}
+          </div>
         )}
       </div>
     </nav>
